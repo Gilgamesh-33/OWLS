@@ -1,0 +1,178 @@
+:root {
+    --owls-green: #0d904f;
+    --owls-yellow: #ebf605;
+    --owls-dark: #30462d;
+    --owls-white: #ffffff;
+    /* Re-map Bootstrap's "primary" to the DIHS green */
+    --bs-primary: #0d904f;
+    --bs-primary-rgb: 13, 144, 79;
+    --bs-link-color: #0d904f;
+    --bs-link-color-rgb: 13, 144, 79;
+    --bs-link-hover-color: #30462d;
+    --bs-link-hover-color-rgb: 48, 70, 45;
+}
+
+body {
+    background: var(--owls-white);
+    color: #1d2a1b;
+}
+
+/* Navbar */
+.owls-nav {
+    background: var(--owls-dark);
+    border-bottom: 4px solid var(--owls-yellow);
+}
+
+    .owls-nav .navbar-brand {
+        color: var(--owls-yellow);
+    }
+
+    .owls-nav .nav-link {
+        color: rgba(255,255,255,.85);
+    }
+
+        .owls-nav .nav-link:hover,
+        .owls-nav .nav-link:focus {
+            color: var(--owls-yellow);
+        }
+
+.hero {
+    background: linear-gradient(135deg, var(--owls-dark), var(--owls-green));
+    color: var(--owls-white);
+    border-radius: 0; /* was 1rem */
+    padding: 3rem 2rem;
+}
+
+.stat-card {
+    border: 0;
+    border-radius: 0; /* was 1rem */
+    box-shadow: 0 2px 8px rgba(48,70,45,.15);
+    border-top: 4px solid var(--owls-green);
+}
+
+    .stat-card .num {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--owls-green);
+    }
+
+.card {
+    border: 1px solid #e3eae1;
+    box-shadow: 0 2px 8px rgba(48,70,45,.08);
+    border-radius: 0; /* was .75rem */
+    background: var(--owls-white);
+}
+
+/* Tables */
+.table thead {
+    background: var(--owls-dark);
+    color: var(--owls-white);
+}
+
+.table-hover > tbody > tr:hover > * {
+    background-color: rgba(13,144,79,.08);
+}
+
+/* Buttons */
+.btn-primary {
+    --bs-btn-bg: #0d904f;
+    --bs-btn-border-color: #0d904f;
+    --bs-btn-color: #fff;
+    --bs-btn-hover-bg: #30462d;
+    --bs-btn-hover-border-color: #30462d;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-active-bg: #30462d;
+    --bs-btn-active-border-color: #30462d;
+    --bs-btn-disabled-bg: #0d904f;
+    --bs-btn-disabled-border-color: #0d904f;
+}
+
+.btn-outline-primary {
+    --bs-btn-color: #0d904f;
+    --bs-btn-border-color: #0d904f;
+    --bs-btn-hover-bg: #0d904f;
+    --bs-btn-hover-border-color: #0d904f;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-active-bg: #0d904f;
+    --bs-btn-active-border-color: #0d904f;
+}
+
+.btn-success {
+    --bs-btn-bg: #30462d;
+    --bs-btn-border-color: #30462d;
+    --bs-btn-color: #fff;
+    --bs-btn-hover-bg: #0d904f;
+    --bs-btn-hover-border-color: #0d904f;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-active-bg: #0d904f;
+    --bs-btn-active-border-color: #0d904f;
+}
+/* Yellow accent buttons need dark text to stay readable */
+.btn-warning {
+    --bs-btn-bg: #ebf605;
+    --bs-btn-border-color: #ebf605;
+    --bs-btn-color: #30462d;
+    --bs-btn-hover-bg: #d4de04;
+    --bs-btn-hover-border-color: #d4de04;
+    --bs-btn-hover-color: #30462d;
+    --bs-btn-active-bg: #d4de04;
+    --bs-btn-active-border-color: #d4de04;
+    --bs-btn-active-color: #30462d;
+    font-weight: 600;
+}
+
+/* Badges (status pills) */
+.badge.bg-primary {
+    background-color: #0d904f !important;
+}
+
+.badge.bg-success {
+    background-color: #30462d !important;
+}
+
+/* Forms */
+.form-control:focus, .form-select:focus {
+    border-color: #0d904f;
+    box-shadow: 0 0 0 .2rem rgba(13,144,79,.25);
+}
+
+.form-check-input:checked {
+    background-color: #0d904f;
+    border-color: #0d904f;
+}
+
+footer {
+    color: var(--owls-dark) !important;
+}
+
+.book-cover {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    display: block;
+    background: #e8f3ec;
+}
+
+.book-cover-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--owls-green);
+    font-size: 3.5rem;
+}
+
+.book-card {
+    overflow: hidden;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background: #fff;
+    }
+
+    
+}

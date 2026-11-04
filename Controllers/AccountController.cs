@@ -1,0 +1,53 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using OWLS.Data;
+using OWLS.Models;
+
+namespace OWLS.Controllers
+{
+    public class AccountController : Controller
+    {
+        private readonly UserManager<ApplicationUser> _users;
+        private readonly SignInManager<ApplicationUser> _signIn;
+
+        public AccountController(UserManager<ApplicationUser> u, SignInManager<ApplicationUser> s)
+        { _users = u; _signIn = s; }
+
+        [HttpGet] public IActionResult Login(string returnUrl = null) { ViewBag.ReturnUrl = returnUrl; return View(); }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginViewModel m, string returnUrl = null)
+        {
+            if (!ModelState.IsValid) return View(m);
+            var result = await _signIn.PasswordSignInAsync(m.Email, m.Password, m.RememberMe, false);
+            if (result.Succeeded)
+                return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToAction("Index", "Home");
+            ModelState.AddModelError("", "Invalid email or password.");
+            return View(m);
+        }
+
+        [HttpGet] public IActionResult Register() => View();
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(RegisterViewModel m)
+        {
+            if (!ModelState.IsValid) return View(m);
+            var user = new ApplicationUser { UserName = m.Email, Email = m.Email, FullName = m.FullName, IdNumber = m.IdNumber, EmailConfirmed = true };
+            var result = await _users.CreateAsync(user, m.Password);
+            if (result.Succeeded)
+            {
+                await _users.AddToRoleAsync(user, DbSeeder.BorrowerRole);
+                await _signIn.SignInAsync(user, false);
+                return RedirectToAction("Index", "Home");
+            }
+            foreach (var e in result.Errors) ModelState.AddModelError("", e.Description);
+            return View(m);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout() { await _signIn.SignOutAsync(); return RedirectToAction("Index", "Home"); }
+
+        public IActionResult AccessDenied() => View();
+    }
+}

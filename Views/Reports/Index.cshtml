@@ -1,0 +1,30 @@
+@model ReportViewModel
+@{ ViewData["Title"] = "Reports"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Library Reports</h2>
+    <button class="btn btn-outline-dark no-print" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+</div>
+<form method="get" class="card p-3 mb-3 no-print"><div class="row g-2 align-items-end">
+    <div class="col-md-4"><label class="form-label small">From</label><input type="date" name="from" value="@Model.From.ToString("yyyy-MM-dd")" class="form-control" /></div>
+    <div class="col-md-4"><label class="form-label small">To</label><input type="date" name="to" value="@Model.To.ToString("yyyy-MM-dd")" class="form-control" /></div>
+    <div class="col-md-4"><button class="btn btn-dark w-100">Generate</button></div>
+</div></form>
+<p class="text-muted">Period: @Model.From.ToString("MMM dd, yyyy") - @Model.To.ToString("MMM dd, yyyy")</p>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card stat-card p-3 text-center"><div class="num">@Model.TotalBorrowed</div>Books borrowed</div></div>
+    <div class="col-md-3"><div class="card stat-card p-3 text-center"><div class="num">@Model.TotalReturned</div>Returned</div></div>
+    <div class="col-md-3"><div class="card stat-card p-3 text-center"><div class="num">@Model.OverdueCount</div>Overdue now</div></div>
+    <div class="col-md-3"><div class="card stat-card p-3 text-center"><div class="num">₱@Model.TotalPenalties.ToString("N2")</div>Penalties collected</div></div>
+</div>
+<div class="row g-3">
+    <div class="col-lg-5"><div class="card p-3"><h5>Top Borrowed Books</h5>
+        <table class="table table-sm mb-0"><thead><tr><th>Title</th><th class="text-end">Times</th></tr></thead><tbody>
+        @foreach (var b in Model.TopBooks) { <tr><td>@b.Title</td><td class="text-end">@b.Count</td></tr> }
+        @if (!Model.TopBooks.Any()) { <tr><td colspan="2" class="text-muted">No data for this period.</td></tr> }
+        </tbody></table></div></div>
+    <div class="col-lg-7"><div class="card p-3"><h5>Overdue Log</h5>
+        <table class="table table-sm mb-0"><thead><tr><th>Book</th><th>Borrower</th><th>Due</th><th class="text-end">Penalty</th></tr></thead><tbody>
+        @foreach (var t in Model.OverdueLog) { <tr><td>@t.Book.Title</td><td>@t.User.FullName</td><td>@t.DueDate.ToString("MMM dd")</td><td class="text-end">₱@t.CurrentPenalty.ToString("N2")</td></tr> }
+        @if (!Model.OverdueLog.Any()) { <tr><td colspan="4" class="text-muted">No overdue books.</td></tr> }
+        </tbody></table></div></div>
+</div>

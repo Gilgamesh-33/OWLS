@@ -1,0 +1,18 @@
+@model IEnumerable<ApplicationUser>
+@{ ViewData["Title"] = "Users"; }
+<h2>User Accounts</h2>
+<form method="get" class="card p-3 mb-3"><div class="row g-2">
+    <div class="col"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Search name, email or ID number..." /></div>
+    <div class="col-auto"><button class="btn btn-dark">Search</button></div>
+</div></form>
+<div class="card"><div class="table-responsive">
+<table class="table align-middle mb-0">
+    <thead><tr><th>Name</th><th>ID Number</th><th>Email</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var u in Model)
+    {
+        <tr><td>@u.FullName</td><td>@u.IdNumber</td><td>@u.Email</td>
+            <td class="text-end"><form asp-action="Delete" asp-route-id="@u.Id" method="post" onsubmit="return confirm('Delete this user?');"><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>
+    }
+    </tbody>
+</table></div></div>

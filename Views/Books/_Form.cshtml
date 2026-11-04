@@ -1,0 +1,25 @@
+@model Book
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="row">
+    <div class="col-md-6 mb-3"><label asp-for="Title" class="form-label"></label><input asp-for="Title" class="form-control" /><span asp-validation-for="Title" class="text-danger"></span></div>
+    <div class="col-md-6 mb-3"><label asp-for="Author" class="form-label"></label><input asp-for="Author" class="form-control" /><span asp-validation-for="Author" class="text-danger"></span></div>
+    <div class="col-md-4 mb-3"><label asp-for="ISBN" class="form-label"></label><input asp-for="ISBN" class="form-control" /><span asp-validation-for="ISBN" class="text-danger"></span></div>
+    <div class="col-md-4 mb-3"><label asp-for="Category" class="form-label"></label><input asp-for="Category" class="form-control" list="cats" /><datalist id="cats"><option>Fiction</option><option>Science</option><option>Technology</option><option>Filipino Literature</option><option>History</option><option>Mathematics</option></datalist><span asp-validation-for="Category" class="text-danger"></span></div>
+    <div class="col-md-2 mb-3"><label asp-for="YearPublished" class="form-label"></label><input asp-for="YearPublished" class="form-control" /><span asp-validation-for="YearPublished" class="text-danger"></span></div>
+    <div class="col-md-2 mb-3"><label asp-for="TotalCopies" class="form-label"></label><input asp-for="TotalCopies" class="form-control" /><span asp-validation-for="TotalCopies" class="text-danger"></span></div>
+    <div class="col-12 mb-3">
+        <label class="form-label">Cover Image</label>
+        @if (!string.IsNullOrEmpty(Model.CoverImagePath))
+        {
+            <div class="mb-2">
+                <img src="@Model.CoverImagePath" alt="Current cover" style="height:160px" />
+                <div class="form-check mt-1">
+                    <input type="checkbox" class="form-check-input" id="removeCover" name="removeCover" value="true" />
+                    <label class="form-check-label" for="removeCover">Remove current cover</label>
+                </div>
+            </div>
+        }
+        <input type="file" name="coverFile" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+        <div class="form-text">JPG, PNG or WEBP, up to 2 MB. Portrait (2:3) images look best.</div>
+    </div>
+</div>
