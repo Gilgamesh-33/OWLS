@@ -1,5 +1,5 @@
 ﻿/* =====================================================================
-   LeafyBooks / OWLS  -  site.css
+   OWLS  -  site.css
    Replace the ENTIRE contents of wwwroot/css/site.css with this file.
    Palette + sizes were measured from the design screenshot.
    ===================================================================== */
@@ -71,10 +71,9 @@ body {
         color: var(--lb-dark);
     }
 
-    .lb-brand svg {
-        width: 20px;
-        height: 20px;
-        flex: none;
+    .lb-brand .bi {
+        font-size: 20px;
+        line-height: 1;
     }
 
 .lb-nav-collapse {
