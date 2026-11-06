@@ -1,9 +1,12 @@
 @model Book
-@{ ViewData["Title"] = "Edit Book"; }
-<h2>Edit Book</h2>
+@{
+    ViewData["Title"] = "Edit Book";
+}
+<div class="page-header"><h2>Edit Book</h2></div>
 <div class="card p-4">
     <form asp-action="Edit" method="post" enctype="multipart/form-data">
-    <input type="hidden" asp-for="Id" />
-    <partial name="_Form" model="Model" />
-    <button class="btn btn-primary">Update</button> <a class="btn btn-secondary" asp-action="Index">Cancel</a>
-</form></div>
+        <input type="hidden" asp-for="Id" />
+        <partial name="_Form" model="Model" />
+        <div class="form-actions"><button class="btn btn-primary">Update</button> <a class="btn btn-secondary" asp-action="Index">Cancel</a></div>
+    </form>
+</div>
