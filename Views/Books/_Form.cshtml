@@ -12,7 +12,7 @@
         @if (!string.IsNullOrEmpty(Model.CoverImagePath))
         {
             <div class="mb-2">
-                <img src="@Model.CoverImagePath" alt="Current cover" style="height:160px" />
+                <img src="@Model.CoverImagePath" alt="Current cover" class="cover-preview" />
                 <div class="form-check mt-1">
                     <input type="checkbox" class="form-check-input" id="removeCover" name="removeCover" value="true" />
                     <label class="form-check-label" for="removeCover">Remove current cover</label>

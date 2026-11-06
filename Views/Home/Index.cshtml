@@ -1,22 +1,80 @@
-@{ ViewData["Title"] = "Home"; }
-<div class="hero mb-4">
-    <h1 class="display-5 fw-bold">Online Web Library System</h1>
-    <p class="lead mb-4">Library transaction and catalog management for Dasmariñas Integrated High School</p>
-    @if (User.Identity.IsAuthenticated)
-    {
-        <form asp-controller="Books" asp-action="Index" method="get" class="row g-2" style="max-width:560px">
-            <div class="col"><input name="search" class="form-control form-control-lg" placeholder="Search title, author, ISBN or category..." /></div>
-            <div class="col-auto"><button class="btn btn-warning btn-lg"><i class="bi bi-search"></i></button></div>
-        </form>
-    }
-    else
-    {
-        <a class="btn btn-warning btn-lg me-2" asp-controller="Account" asp-action="Login">Login</a>
-        <a class="btn btn-outline-light btn-lg" asp-controller="Account" asp-action="Register">Create account</a>
-    }
-</div>
-<div class="row g-3">
-    <div class="col-md-4"><div class="card stat-card p-3 text-center"><div class="num">@ViewBag.Titles</div>Book titles</div></div>
-    <div class="col-md-4"><div class="card stat-card p-3 text-center"><div class="num">@ViewBag.Available</div>Copies available</div></div>
-    <div class="col-md-4"><div class="card stat-card p-3 text-center"><div class="num">@ViewBag.Active</div>Books currently borrowed</div></div>
-</div>
+@{
+    ViewData["Title"] = "Home";
+    ViewData["FullWidth"] = true;
+    var signedIn = User.Identity.IsAuthenticated;
+}
+
+<section class="lb-hero">
+    <div class="lb-hero-glow" aria-hidden="true"></div>
+
+    <div class="lb-hero-grid">
+        <!-- Left: copy -->
+        <div>
+            <span class="lb-badge">Modern Library Management</span>
+
+            <h1 class="lb-title">Grow Your Mind,<br />One Book At A<br />Time.</h1>
+
+            <p class="lb-lead">
+                Experience a lush reading environment where borrowing is as natural as breathing.
+                Our smart system brings the garden of knowledge to your fingertips.
+            </p>
+
+            <div class="lb-cta">
+                @if (signedIn)
+                {
+                    <a class="lb-btn lb-btn-filled lb-btn-hero" asp-controller="Books" asp-action="Index">Start Borrowing</a>
+                }
+                else
+                {
+                    <a class="lb-btn lb-btn-filled lb-btn-hero" asp-controller="Account" asp-action="Register">Start Borrowing</a>
+                }
+                <a class="lb-btn lb-btn-outline lb-btn-hero" asp-controller="Home" asp-action="Index" asp-fragment="story">Take a Tour</a>
+            </div>
+        </div>
+
+        <!-- Right: photo + rating card -->
+        <div class="lb-visual">
+            <img class="lb-photo"
+                 src="~/images/library-hero.jpg"
+                 onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1000&q=80';"
+                 alt="A curved wall of library bookshelves" />
+
+            <div class="lb-rating">
+                <div class="lb-stars" aria-label="5 out of 5 stars">
+                    @for (var i = 0; i < 5; i++)
+                    {
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                    }
+                </div>
+                <p class="lb-quote">"The most peaceful place to read.</p>
+                <div class="lb-quote-by">Maria S., Member</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="lb-section" id="story">
+    <div class="lb-section-inner">
+        @if (signedIn)
+        {
+            <form asp-controller="Books" asp-action="Index" method="get" class="row g-2 mb-5" style="max-width:560px">
+                <div class="col"><input name="search" class="form-control form-control-lg" placeholder="Search title, author, ISBN or category..." /></div>
+                <div class="col-auto"><button class="btn btn-primary btn-lg"><i class="bi bi-search"></i></button></div>
+            </form>
+        }
+
+        <div class="row g-4">
+            <div class="col-md-4"><div class="lb-stat"><span class="num">@ViewBag.Titles</span>Book titles</div></div>
+            <div class="col-md-4"><div class="lb-stat"><span class="num">@ViewBag.Available</span>Copies available</div></div>
+            <div class="col-md-4"><div class="lb-stat"><span class="num">@ViewBag.Active</span>Books currently borrowed</div></div>
+        </div>
+
+        <div class="lb-story">
+            <h2>Our Story</h2>
+            <p>
+                LeafyBooks is the Online Web Library System of Dasmariñas Integrated High School &mdash;
+                a calm, modern way to browse the catalog, borrow books and keep track of every transaction.
+            </p>
+        </div>
+    </div>
+</section>
