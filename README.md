@@ -21,3 +21,5 @@ Install niyo muna to (If hindi pa kayo nakakainstall):
 	- Microsoft.EntityFrameworkCore.Tools
 
 Tools > NuGet Package Manager > Package Manager Console > Update-Database
+
+hello po titi
