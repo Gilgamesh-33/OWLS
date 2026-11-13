@@ -128,9 +128,10 @@
                             }
                             else
                             {
-                                <form asp-controller="Transactions" asp-action="RequestBorrow" asp-route-bookId="@b.Id" method="post" class="m-0">
+                                <form asp-controller="Transactions" asp-action="RequestBorrow" asp-route-bookId="@b.Id" method="post" class="m-0 borrow-request-form" data-book-title="@b.Title">
                                     @Html.AntiForgeryToken()
-                                    <button class="btn btn-primary w-100" @(b.AvailableCopies < 1 ? "disabled" : null)><i class="bi bi-bookmark-plus me-1"></i>Borrow Book</button>
+                                    <input type="hidden" name="returnTo" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+                                    <button class="btn btn-primary w-100" @(b.AvailableCopies < 1 ? "disabled" : null)><i class="bi bi-bookmark-plus me-1"></i>Request to Borrow</button>
                                 </form>
                             }
                         </div>
@@ -151,3 +152,4 @@ else
         </div>
     </div>
 }
+

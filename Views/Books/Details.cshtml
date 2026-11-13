@@ -31,7 +31,31 @@
                 <dt class="col-sm-3">Availability</dt>
                 <dd class="col-sm-9">@Model.AvailableCopies of @Model.TotalCopies copies available</dd>
             </dl>
-            <div class="mt-4"><a class="btn btn-secondary" asp-action="Index">Back to catalog</a></div>
+            <div class="mt-4 d-flex flex-wrap gap-2">
+                <a class="btn btn-secondary" asp-action="Index">Back to catalog</a>
+                @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Admin"))
+                {
+                    var pending = (ViewBag.IsPending as bool?) == true;
+                    var borrowed = (ViewBag.IsBorrowed as bool?) == true;
+                    if (pending)
+                    {
+                        <button class="btn btn-warning text-dark" disabled><i class="bi bi-hourglass-split me-1"></i>Request Pending</button>
+                    }
+                    else if (borrowed)
+                    {
+                        <button class="btn btn-secondary" disabled><i class="bi bi-journal-check me-1"></i>Currently Borrowed</button>
+                    }
+                    else
+                    {
+                        <form asp-controller="Transactions" asp-action="RequestBorrow" asp-route-bookId="@Model.Id" method="post" class="m-0 borrow-request-form d-inline" data-book-title="@Model.Title">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="returnTo" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+                            <button type="submit" class="btn btn-primary" @(Model.AvailableCopies < 1 ? "disabled" : null)><i class="bi bi-bookmark-plus me-1"></i>Request to Borrow</button>
+                        </form>
+                    }
+                }
+            </div>
         </div>
     </div>
 </div>
+

@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body class="d-flex flex-column min-vh-100">
+    <a href="#main-content" class="visually-hidden-focusable position-absolute top-0 start-0 m-2 px-3 py-2 bg-white border rounded shadow-sm" style="z-index:2000;color:var(--lb-dark);">Skip to main content</a>
 
     <header class="lb-nav no-print">
         <div class="lb-nav-inner">
@@ -38,12 +39,12 @@
                         @if (User.IsInRole("Admin"))
                         {
                             <li><a asp-controller="Transactions" asp-action="Index" class="@Active("Transactions")">Transactions</a></li>
-                            <li><a asp-controller="Users" asp-action="Index" class="@Active("Users")">Users</a></li>
+                            <li><a asp-controller="Users" asp-action="Index" class="@Active("Users")">Borrowers</a></li>
                             <li><a asp-controller="Reports" asp-action="Index" class="@Active("Reports")">Reports</a></li>
                         }
                         else
                         {
-                            <li><a asp-controller="Transactions" asp-action="My" class="@Active("Transactions")">My Borrowings</a></li>
+                            <li><a asp-controller="Transactions" asp-action="Borrow" class="@Active("Transactions")">Borrow Books</a></li>
                         }
                     }
                     else
@@ -75,27 +76,27 @@
         <div class="container mt-3 no-print">
             @if (TempData["Success"] != null)
             {
-                <div class="alert alert-success alert-dismissible fade show">@TempData["Success"]<button class="btn-close" data-bs-dismiss="alert"></button></div>
+                <div class="alert alert-success alert-dismissible fade show" role="status">@TempData["Success"]<button class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>
             }
             @if (TempData["Error"] != null)
             {
-                <div class="alert alert-danger alert-dismissible fade show">@TempData["Error"]<button class="btn-close" data-bs-dismiss="alert"></button></div>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">@TempData["Error"]<button class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>
             }
         </div>
-        <main class="flex-grow-1">
+        <main id="main-content" class="flex-grow-1">
             @RenderBody()
         </main>
     }
     else
     {
-        <main class="container lb-main flex-grow-1">
+        <main id="main-content" class="container lb-main flex-grow-1">
             @if (TempData["Success"] != null)
             {
-                <div class="alert alert-success alert-dismissible fade show no-print">@TempData["Success"]<button class="btn-close" data-bs-dismiss="alert"></button></div>
+                <div class="alert alert-success alert-dismissible fade show no-print" role="status">@TempData["Success"]<button class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>
             }
             @if (TempData["Error"] != null)
             {
-                <div class="alert alert-danger alert-dismissible fade show no-print">@TempData["Error"]<button class="btn-close" data-bs-dismiss="alert"></button></div>
+                <div class="alert alert-danger alert-dismissible fade show no-print" role="alert">@TempData["Error"]<button class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>
             }
             @RenderBody()
         </main>
@@ -104,6 +105,30 @@
     <footer class="lb-footer no-print">
         &copy; @DateTime.Now.Year Online Web Library System &middot; Dasmariñas Integrated High School | Cabayao Gabito Hizo Joson
     </footer>
+
+    <div class="modal fade" id="borrowConfirmModal" tabindex="-1" aria-labelledby="borrowConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 1rem; overflow: hidden;">
+                <div class="modal-header border-0 pb-0" style="background: var(--lb-surface);">
+                    <h5 class="modal-title fw-bold" id="borrowConfirmModalLabel" style="color: var(--lb-dark);"><i class="bi bi-bookmark-plus me-2"></i>Confirm Borrow Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <div class="d-flex gap-3 align-items-start">
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px;background:var(--lb-chip);color:var(--lb-dark);"><i class="bi bi-journal-text fs-5"></i></div>
+                        <div>
+                            <div class="fw-semibold mb-1" id="borrowConfirmBookTitle">Request to borrow this book?</div>
+                            <div class="text-muted small">Your request will be submitted as <strong>Pending</strong> for librarian approval. You can track its status in Borrow Books.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="borrowConfirmSubmitBtn"><i class="bi bi-check-lg me-1"></i>Submit Request</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
             // Back/Forward button: never show a stale cached page (e.g. the login page after signing in).
@@ -117,6 +142,44 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@4.0.0/dist/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+            (function () {
+                var pendingForm = null;
+                var modalEl = document.getElementById('borrowConfirmModal');
+                if (!modalEl || typeof bootstrap === 'undefined') return;
+                var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                var titleEl = document.getElementById('borrowConfirmBookTitle');
+                var submitBtn = document.getElementById('borrowConfirmSubmitBtn');
+
+                document.addEventListener('submit', function (e) {
+                    var form = e.target;
+                    if (!form || !form.classList || !form.classList.contains('borrow-request-form')) return;
+                    if (form.dataset.confirmed === 'true') {
+                        form.dataset.confirmed = 'false';
+                        return;
+                    }
+                    e.preventDefault();
+                    pendingForm = form;
+                    var bookTitle = form.getAttribute('data-book-title');
+                    if (titleEl) titleEl.textContent = bookTitle ? ('Request to borrow "' + bookTitle + '"?') : 'Request to borrow this book?';
+                    modal.show();
+                }, true);
+
+                if (submitBtn) {
+                    submitBtn.addEventListener('click', function () {
+                        if (!pendingForm) return;
+                        var f = pendingForm;
+                        pendingForm = null;
+                        f.dataset.confirmed = 'true';
+                        modal.hide();
+                        if (typeof f.requestSubmit === 'function') f.requestSubmit();
+                        else f.submit();
+                    });
+                }
+
+                modalEl.addEventListener('hidden.bs.modal', function () { pendingForm = null; });
+            })();
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
