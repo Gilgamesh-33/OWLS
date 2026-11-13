@@ -11,6 +11,9 @@ namespace OWLS.Controllers
 
         public async Task<IActionResult> Index()
         {
+            if (User.Identity?.IsAuthenticated == true)
+                return RedirectToAction("Index", "Books");
+
             ViewBag.Titles = await _db.Books.CountAsync();
             ViewBag.Available = await _db.Books.SumAsync(b => (int?)b.AvailableCopies) ?? 0;
             ViewBag.Active = await _db.Transactions.CountAsync(t => t.ReturnDate == null);

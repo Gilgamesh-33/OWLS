@@ -21,6 +21,7 @@ namespace OWLS.Models
     }
 
     public class TopBook { public string Title { get; set; } public int Count { get; set; } }
+    public class ChartPoint { public string Label { get; set; } = ""; public int Value { get; set; } }
 
     public class ReportViewModel
     {
@@ -31,7 +32,11 @@ namespace OWLS.Models
         public int ActiveLoans { get; set; }
         public int OverdueCount { get; set; }
         public decimal TotalPenalties { get; set; }
+        public int PendingRequests { get; set; }
+        public int DeclinedRequests { get; set; }
         public List<TopBook> TopBooks { get; set; } = new();
         public List<BorrowTransaction> OverdueLog { get; set; } = new();
+        public List<ChartPoint> BorrowTrend { get; set; } = new();
+        public List<ChartPoint> StatusBreakdown { get; set; } = new();
     }
 }

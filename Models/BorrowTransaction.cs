@@ -31,13 +31,18 @@ namespace OWLS.Models
         [Column(TypeName = "decimal(10,2)")]
         public decimal Penalty { get; set; }
 
+        [StringLength(20)]
+        public string RequestStatus { get; set; } = "Approved";
+
         [NotMapped]
-        public string Status => ReturnDate != null ? "Returned"
+        public string Status => RequestStatus == "Pending" ? "Pending"
+            : RequestStatus == "Declined" ? "Declined"
+            : ReturnDate != null ? "Returned"
             : DateTime.Today > DueDate.Date ? "Overdue" : "Borrowed";
 
         [NotMapped]
         public decimal CurrentPenalty => ReturnDate != null ? Penalty
-            : DateTime.Today > DueDate.Date
+            : RequestStatus == "Approved" && DateTime.Today > DueDate.Date
                 ? (DateTime.Today - DueDate.Date).Days * LibrarySettings.PenaltyPerDay : 0m;
     }
 }

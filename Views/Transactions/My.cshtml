@@ -12,11 +12,11 @@
                 {
                     <tr>
                         <td>@t.Book.Title</td>
-                        <td>@t.BorrowDate.ToString("MMM dd, yyyy")</td>
-                        <td>@t.DueDate.ToString("MMM dd, yyyy")</td>
+                        <td>@(t.RequestStatus == "Pending" ? "-" : t.BorrowDate.ToString("MMM dd, yyyy"))</td>
+                        <td>@(t.RequestStatus == "Pending" ? "-" : t.DueDate.ToString("MMM dd, yyyy"))</td>
                         <td>@(t.ReturnDate?.ToString("MMM dd, yyyy") ?? "-")</td>
                         <td>@(t.CurrentPenalty > 0 ? "₱" + t.CurrentPenalty.ToString("N2") : "-")</td>
-                        <td><span class="badge @(t.Status == "Returned" ? "bg-secondary" : t.Status == "Overdue" ? "bg-danger" : "bg-primary")">@t.Status</span></td>
+                        <td><span class="badge @(t.Status == "Returned" ? "bg-secondary" : t.Status == "Overdue" ? "bg-danger" : t.Status == "Pending" ? "bg-warning text-dark" : t.Status == "Declined" ? "bg-dark" : "bg-primary")">@t.Status</span></td>
                     </tr>
                 }
                 @if (!Model.Any())

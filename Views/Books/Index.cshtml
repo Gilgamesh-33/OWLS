@@ -1,83 +1,153 @@
 @model IEnumerable<Book>
 @{
-    ViewData["Title"] = "Catalog"; bool admin = User.IsInRole("Admin");
+    ViewData["Title"] = "Catalog";
+    bool admin = User.IsInRole("Admin");
+    var books = Model.ToList();
+    var categories = ViewBag.Categories as List<string> ?? new List<string>();
 }
-<div class="page-header">
-    <h2>Book Catalog</h2>
+<div class="page-header admin-page-header mb-4">
+    <div>
+        <h2 class="mb-1">@(admin ? "Book Catalog" : "Browse Catalog")</h2>
+        <p class="text-muted mb-0">@(admin ? "Manage your library collection, availability, and records." : "Discover books and request to borrow from the library.")</p>
+    </div>
     @if (admin)
     {
-        <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg"></i> Add Book</a>
+        <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1"></i> Add Book</a>
+    }
+    else
+    {
+        <span class="catalog-count-badge"><i class="bi bi-collection me-1"></i>@books.Count book@(books.Count == 1 ? "" : "s") shown</span>
     }
 </div>
-<form method="get" class="card filter-bar mb-4 no-print">
-    <div class="row g-2 align-items-end">
-        <div class="col-md-4"><label class="form-label small">Search</label><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Title, author, ISBN..." /></div>
-        <div class="col-md-3">
-            <label class="form-label small">Category</label>
-            <select name="category" class="form-select">
-                <option value="">All categories</option>
-                @foreach (var c in (List<string>)ViewBag.Categories)
-                {
-                    <option value="@c" selected="@(c == ViewBag.Category)">@c</option>
-                }
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small">Sort by</label>
-            <select name="sort" class="form-select">
-                <option value="" selected="@(string.IsNullOrEmpty(ViewBag.Sort))">Title A-Z</option>
-                <option value="title_desc" selected="@(ViewBag.Sort == "title_desc")">Title Z-A</option>
-                <option value="author" selected="@(ViewBag.Sort == "author")">Author</option>
-                <option value="year" selected="@(ViewBag.Sort == "year")">Newest</option>
-            </select>
-        </div>
-        <div class="col-md-2"><div class="form-check mb-2"><input type="checkbox" class="form-check-input" id="av" name="availableOnly" value="true" checked="@ViewBag.AvailableOnly" /><label class="form-check-label small" for="av">Available only</label></div></div>
-        <div class="col-md-1"><button class="btn btn-dark w-100"><i class="bi bi-search"></i></button></div>
+
+<div class="card filter-card mb-4 no-print">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-lg-4">
+                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input name="search" value="@ViewBag.Search" class="form-control border-start-0 ps-0" placeholder="Title, author, ISBN, category..." />
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Category</label>
+                <select name="category" class="form-select">
+                    <option value="">All categories</option>
+                    @foreach (var c in categories)
+                    {
+                        <option value="@c" selected="@(c == (string)ViewBag.Category)">@c</option>
+                    }
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-2">
+                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Sort by</label>
+                <select name="sort" class="form-select">
+                    <option value="" selected="@(string.IsNullOrEmpty((string)ViewBag.Sort))">Title A-Z</option>
+                    <option value="title_desc" selected="@((string)ViewBag.Sort == "title_desc")">Title Z-A</option>
+                    <option value="author" selected="@((string)ViewBag.Sort == "author")">Author</option>
+                    <option value="year" selected="@((string)ViewBag.Sort == "year")">Newest</option>
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-1">
+                <div class="form-check pt-lg-4 mb-1">
+                    <input type="checkbox" class="form-check-input" id="av" name="availableOnly" value="true" checked="@((bool)(ViewBag.AvailableOnly ?? false))" />
+                    <label class="form-check-label small fw-semibold" for="av">Available</label>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-2 d-flex gap-2">
+                <button class="btn btn-dark flex-fill"><i class="bi bi-funnel me-1"></i> Apply</button>
+                <a asp-action="Index" class="btn btn-outline-secondary" title="Clear"><i class="bi bi-x-lg"></i></a>
+            </div>
+        </form>
     </div>
-</form>
-<div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3">
-    @foreach (var b in Model)
-    {
-        <div class="col">
-            <div class="card h-100 book-card">
-                <a asp-action="Details" asp-route-id="@b.Id" class="book-cover-link">
-                    @if (!string.IsNullOrEmpty(b.CoverImagePath))
-                    {
-                        <img src="@b.CoverImagePath" class="book-cover" alt="@b.Title" />
-                    }
-                    else
-                    {
+</div>
 
-                        <div class="book-cover book-cover-empty"><i class="bi bi-book"></i></div>
-                    }
-                </a>
-                <div class="card-body">
-                    <a asp-action="Details" asp-route-id="@b.Id" class="book-title text-decoration-none">@b.Title</a>
-                    <div class="small text-muted">@b.Author</div>
-                    <div class="small text-muted">@b.Category</div>
-                    @if (b.AvailableCopies > 0)
+@if (books.Any())
+{
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4 catalog-grid">
+        @foreach (var b in books)
+        {
+            <div class="col">
+                <div class="card h-100 book-card catalog-card">
+                    <a asp-action="Details" asp-route-id="@b.Id" class="book-cover-link position-relative d-block">
+                        @if (!string.IsNullOrEmpty(b.CoverImagePath))
+                        {
+                            <img src="@b.CoverImagePath" class="book-cover" alt="@b.Title" />
+                        }
+                        else
+                        {
+                            <div class="book-cover book-cover-empty"><i class="bi bi-book"></i></div>
+                        }
+                        <div class="catalog-cover-badge">
+                            @if (b.AvailableCopies > 0)
+                            {
+                                <span class="badge bg-success">@b.AvailableCopies available</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Unavailable</span>
+                            }
+                        </div>
+                    </a>
+                    <div class="card-body d-flex flex-column">
+                        <div class="mb-1"><span class="catalog-category">@b.Category</span></div>
+                        <a asp-action="Details" asp-route-id="@b.Id" class="book-title text-decoration-none mb-1">@b.Title</a>
+                        <div class="small text-muted mb-2"><i class="bi bi-person me-1"></i>@b.Author</div>
+                        <div class="mt-auto pt-2 d-flex justify-content-between align-items-center small text-muted catalog-meta">
+                            <span><i class="bi bi-calendar3 me-1"></i>@b.YearPublished</span>
+                            <span>@b.AvailableCopies/@b.TotalCopies copies</span>
+                        </div>
+                    </div>
+                    @if (admin)
                     {
-                        <span class="badge bg-success">@b.AvailableCopies / @b.TotalCopies available</span>
+                        <div class="card-footer no-print bg-transparent border-top-0 pt-0 px-3 pb-3">
+                            <div class="d-grid gap-2">
+                                <a class="btn btn-sm btn-success @(b.AvailableCopies < 1 ? "disabled" : "")" asp-controller="Transactions" asp-action="Create" asp-route-bookId="@b.Id"><i class="bi bi-journal-plus me-1"></i>Checkout</a>
+                                <div class="d-flex gap-2">
+                                    <a class="btn btn-sm btn-outline-primary flex-fill" asp-action="Edit" asp-route-id="@b.Id"><i class="bi bi-pencil"></i> Edit</a>
+                                    <a class="btn btn-sm btn-outline-danger flex-fill" asp-action="Delete" asp-route-id="@b.Id"><i class="bi bi-trash"></i> Delete</a>
+                                </div>
+                            </div>
+                        </div>
                     }
-                    else
+                    else if (User.Identity?.IsAuthenticated == true)
                     {
-
-                        <span class="badge bg-danger">Unavailable</span>
+                        var pendingIds = ViewBag.MyPendingBookIds as List<int> ?? new List<int>();
+                        var borrowedIds = ViewBag.MyBorrowedBookIds as List<int> ?? new List<int>();
+                        bool isPending = pendingIds.Contains(b.Id);
+                        bool isBorrowed = borrowedIds.Contains(b.Id);
+                        <div class="card-footer no-print bg-transparent border-top-0 pt-0 px-3 pb-3">
+                            @if (isPending)
+                            {
+                                <button class="btn btn-warning text-dark w-100" disabled><i class="bi bi-hourglass-split me-1"></i>Request Pending</button>
+                            }
+                            else if (isBorrowed)
+                            {
+                                <button class="btn btn-secondary w-100" disabled><i class="bi bi-journal-check me-1"></i>Currently Borrowed</button>
+                            }
+                            else
+                            {
+                                <form asp-controller="Transactions" asp-action="RequestBorrow" asp-route-bookId="@b.Id" method="post" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-primary w-100" @(b.AvailableCopies < 1 ? "disabled" : null)><i class="bi bi-bookmark-plus me-1"></i>Borrow Book</button>
+                                </form>
+                            }
+                        </div>
                     }
                 </div>
-                @if (admin)
-                {
-                    <div class="card-footer no-print">
-                        <a class="btn btn-sm btn-success @(b.AvailableCopies < 1 ? "disabled" : "")" asp-controller="Transactions" asp-action="Create" asp-route-bookId="@b.Id">Borrow</a>
-                        <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@b.Id">Edit</a>
-                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@b.Id">Delete</a>
-                    </div>
-                }
             </div>
-        </div>
-    }
-</div>
-@if (!Model.Any())
+        }
+    </div>
+}
+else
 {
-    <div class="empty-state">No books found.</div>
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <div class="empty-state-icon mb-2"><i class="bi bi-journal-x"></i></div>
+            <div class="fw-semibold mb-1">No books found</div>
+            <div class="text-muted small">Try adjusting your search, category, or filter options.</div>
+            <a asp-action="Index" class="btn btn-outline-primary btn-sm mt-3">Clear filters</a>
+        </div>
+    </div>
 }

@@ -1,57 +1,184 @@
 @model IEnumerable<BorrowTransaction>
 @{
     ViewData["Title"] = "Transactions";
+    var list = Model.ToList();
+    int pending = (int)(ViewBag.PendingCount ?? list.Count(t => t.RequestStatus == "Pending"));
+    int active = list.Count(t => t.RequestStatus == "Approved" && t.ReturnDate == null);
+    int overdue = list.Count(t => t.Status == "Overdue");
+    int returned = list.Count(t => t.Status == "Returned");
 }
-<div class="page-header">
-    <h2>Borrowing Transactions</h2>
-    <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg"></i> New Checkout</a>
+<div class="page-header admin-page-header mb-4">
+    <div>
+        <h2 class="mb-1">Borrowing Transactions</h2>
+        <p class="text-muted mb-0">Review requests, manage checkouts, and track returns in one place.</p>
+    </div>
+    <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1"></i> New Checkout</a>
 </div>
-<form method="get" class="card filter-bar mb-4">
-    <div class="row g-2">
-        <div class="col-md-6"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Search book, borrower or ID number..." /></div>
-        <div class="col-md-4">
-            <select name="status" class="form-select">
-                <option value="">All statuses</option>
-                @foreach (var s in new[] { "Borrowed", "Overdue", "Returned" })
-                {
-                    <option value="@s" selected="@(s == ViewBag.Status)">@s</option>
-                }
-            </select>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card stat-tile h-100">
+            <div class="card-body">
+                <div class="stat-tile-label"><i class="bi bi-hourglass-split"></i> Pending Requests</div>
+                <div class="stat-tile-value">@pending</div>
+            </div>
         </div>
-        <div class="col-md-2"><button class="btn btn-dark w-100">Filter</button></div>
     </div>
-</form>
-<div class="card">
+    <div class="col-6 col-lg-3">
+        <div class="card stat-tile h-100">
+            <div class="card-body">
+                <div class="stat-tile-label"><i class="bi bi-journal-check"></i> Active Loans</div>
+                <div class="stat-tile-value">@active</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-tile h-100">
+            <div class="card-body">
+                <div class="stat-tile-label"><i class="bi bi-exclamation-triangle"></i> Overdue</div>
+                <div class="stat-tile-value text-danger">@overdue</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-tile h-100">
+            <div class="card-body">
+                <div class="stat-tile-label"><i class="bi bi-arrow-return-left"></i> Returned</div>
+                <div class="stat-tile-value">@returned</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-lg-6">
+                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input name="search" value="@ViewBag.Search" class="form-control border-start-0 ps-0" placeholder="Search book title, borrower, or ID number..." />
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All statuses</option>
+                    @foreach (var s in new[] { "Pending", "Borrowed", "Overdue", "Returned", "Declined" })
+                    {
+                        <option value="@s" selected="@(s == ViewBag.Status)">@s</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6 col-lg-2 d-flex gap-2">
+                <button class="btn btn-dark flex-fill"><i class="bi bi-funnel me-1"></i> Filter</button>
+                <a asp-action="Index" class="btn btn-outline-secondary" title="Clear filters"><i class="bi bi-x-lg"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card table-card">
+    <div class="card-header bg-transparent border-0 px-4 pt-4 pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h5 class="mb-0">Transaction Records</h5>
+            <small class="text-muted">Showing @list.Count record(s)</small>
+        </div>
+        @if (pending > 0)
+        {
+            <span class="badge rounded-pill text-bg-warning"><i class="bi bi-bell me-1"></i>@pending pending approval@(pending == 1 ? "" : "s")</span>
+        }
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead><tr><th>#</th><th>Book</th><th>Borrower</th><th>Borrowed</th><th>Due</th><th>Returned</th><th>Penalty</th><th>Status</th><th></th></tr></thead>
+        <table class="table table-hover align-middle mb-0 pro-table">
+            <thead>
+                <tr>
+                    <th class="ps-4">#</th>
+                    <th>Book</th>
+                    <th>Borrower</th>
+                    <th>Borrowed</th>
+                    <th>Due</th>
+                    <th>Returned</th>
+                    <th>Penalty</th>
+                    <th>Status</th>
+                    <th class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
             <tbody>
-                @foreach (var t in Model)
+                @foreach (var t in list)
                 {
-                    <tr>
-                        <td>@t.Id</td>
-                        <td>@t.Book.Title</td>
-                        <td>@t.User.FullName<br /><small class="text-muted">@t.User.IdNumber</small></td>
-                        <td>@t.BorrowDate.ToString("MMM dd, yyyy")</td>
-                        <td>@t.DueDate.ToString("MMM dd, yyyy")</td>
-                        <td>@(t.ReturnDate?.ToString("MMM dd, yyyy") ?? "-")</td>
-                        <td>@(t.CurrentPenalty > 0 ? "₱" + t.CurrentPenalty.ToString("N2") : "-")</td>
-                        <td><span class="badge @(t.Status == "Returned" ? "bg-secondary" : t.Status == "Overdue" ? "bg-danger" : "bg-primary")">@t.Status</span></td>
-                        <td class="text-end text-nowrap">
-                            @if (t.ReturnDate == null)
-                            {
-                                <form asp-action="Return" asp-route-id="@t.Id" method="post" class="d-inline"><button class="btn btn-sm btn-success">Return</button></form>
-                                <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@t.Id">Edit</a>
-                            }
-                            <form asp-action="Delete" asp-route-id="@t.Id" method="post" class="d-inline" onsubmit="return confirm('Delete this transaction?');"><button class="btn btn-sm btn-outline-danger">Delete</button></form>
+                    <tr class="@(t.RequestStatus == "Pending" ? "row-pending" : "")">
+                        <td class="ps-4 text-muted fw-semibold">@t.Id</td>
+                        <td>
+                            <div class="fw-semibold">@t.Book.Title</div>
                         </td>
-                    </tr>
-                }
-                @if (!Model.Any())
+                        <td>
+                            <div class="fw-semibold">@t.User.FullName</div>
+                            <small class="text-muted">@t.User.IdNumber</small>
+                        </td>
+                        <td>@if (t.RequestStatus == "Pending") {
+                            <span class="text-muted">—</span>
+                        } else
+                        {
+
+                            @t.BorrowDate.ToString("MMM dd, yyyy")
+                        }
+                    </td>
+                    <td>@if (t.RequestStatus == "Pending") {
+                        <span class="text-muted">—</span>
+                    } else
+                    {
+
+                        @t.DueDate.ToString("MMM dd, yyyy")
+                    }
+                </td>
+                <td>@if (t.ReturnDate != null) {
+                    @t.ReturnDate.Value.ToString("MMM dd, yyyy")
+                } else
                 {
-                    <tr><td colspan="9" class="text-center text-muted py-4">No transactions found.</td></tr>
+
+                    <span class="text-muted">—</span>
                 }
-            </tbody>
-        </table>
-    </div>
+            </td>
+            <td>
+                @if (t.CurrentPenalty > 0)
+                {
+                    <span class="fw-semibold text-danger">₱@t.CurrentPenalty.ToString("N2")</span>
+                }
+                else
+                {
+                    <span class="text-muted">—</span>
+                }
+            </td>
+            <td>
+                <span class="badge status-badge @(t.Status == "Returned" ? "status-returned" : t.Status == "Overdue" ? "status-overdue" : t.Status == "Pending" ? "status-pending" : t.Status == "Declined" ? "status-declined" : "status-borrowed")">@t.Status</span>
+            </td>
+            <td class="text-end pe-4 text-nowrap">
+                @if (t.RequestStatus == "Pending")
+                {
+                    <form asp-action="Approve" asp-route-id="@t.Id" method="post" class="d-inline">@Html.AntiForgeryToken()<button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Accept</button></form>
+                    <form asp-action="Decline" asp-route-id="@t.Id" method="post" class="d-inline">@Html.AntiForgeryToken()<button class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg"></i> Decline</button></form>
+                }
+                else if (t.RequestStatus == "Approved" && t.ReturnDate == null)
+                {
+                    <form asp-action="Return" asp-route-id="@t.Id" method="post" class="d-inline">@Html.AntiForgeryToken()<button class="btn btn-sm btn-success"><i class="bi bi-arrow-return-left"></i> Return</button></form>
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@t.Id"><i class="bi bi-pencil"></i> Edit</a>
+                }
+                <form asp-action="Delete" asp-route-id="@t.Id" method="post" class="d-inline" onsubmit="return confirm('Delete this transaction?');">@Html.AntiForgeryToken()<button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button></form>
+            </td>
+        </tr>
+    }
+    @if (!list.Any())
+    {
+        <tr>
+            <td colspan="9" class="text-center py-5">
+                <div class="empty-state-icon mb-2"><i class="bi bi-inbox"></i></div>
+                <div class="fw-semibold">No transactions found</div>
+                <div class="text-muted small">Try adjusting your search or filter criteria.</div>
+            </td>
+        </tr>
+    }
+</tbody>
+</table>
+</div>
 </div>

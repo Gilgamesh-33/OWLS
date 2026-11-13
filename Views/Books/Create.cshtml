@@ -2,10 +2,23 @@
 @{
     ViewData["Title"] = "Add Book";
 }
-<div class="page-header"><h2>Add Book</h2></div>
-<div class="card p-4">
-    <form asp-action="Create" method="post" enctype="multipart/form-data">
-        <partial name="_Form" model="Model" />
-        <div class="form-actions"><button class="btn btn-primary">Save</button> <a class="btn btn-secondary" asp-action="Index">Cancel</a></div>
-    </form>
+<div class="page-header admin-page-header mb-4">
+    <div>
+        <h2 class="mb-1">Add New Book</h2>
+        <p class="text-muted mb-0">Add a new title to the library catalog with complete details and cover image.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i> Back to Catalog</a>
+</div>
+
+<div class="card form-card-pro">
+    <div class="card-body p-4 p-lg-5">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            <partial name="_Form" model="Model" />
+            <hr class="my-4" />
+            <div class="d-flex flex-wrap gap-2 justify-content-end">
+                <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+                <button type="submit" class="btn btn-primary px-4"><i class="bi bi-plus-circle me-1"></i> Save Book</button>
+            </div>
+        </form>
+    </div>
 </div>
