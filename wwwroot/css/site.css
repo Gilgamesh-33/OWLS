@@ -1,4 +1,4 @@
-﻿/* =====================================================================
+/* =====================================================================
    OWLS  -  site.css
    Replace the ENTIRE contents of wwwroot/css/site.css with this file.
    Palette + sizes were measured from the design screenshot.
@@ -1054,6 +1054,31 @@ body {
     color: var(--lb-dark);
     line-height: 1.1;
 }
+.report-print-logo-img {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.report-print-head {
+    border-bottom: 2px solid var(--lb-dark);
+    padding-bottom: .75rem;
+}
+
+.report-print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 4mm 10mm 0;
+    border-top: 1px solid #d7e0d7;
+    background: #fff;
+}
+
+.report-page-number::after {
+    content: \"Page \" counter(page);
+}
 
 @media (max-width: 767.98px) {
     .auth-wrapper {
@@ -1169,4 +1194,19 @@ body {
     .report-print-header {
         display: block !important;
     }
+
+    .report-print-footer {
+        display: block !important;
+    }
+
+    .report-print-page {
+        padding-bottom: 18mm !important;
+    }
 }
+
+.modal-backdrop.show { opacity: .45; backdrop-filter: blur(2px); }
+
+
+.borrow-section-hint { color: var(--lb-text); }
+.card:focus-within { box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .12); }
+.btn:focus-visible, .form-control:focus, .form-select:focus, .nav-link:focus-visible, a:focus-visible { outline: none; }

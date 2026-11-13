@@ -19,8 +19,42 @@ namespace OWLS.Controllers
             var q = _users.Users.AsQueryable();
             if (!string.IsNullOrWhiteSpace(search))
                 q = q.Where(u => u.FullName.Contains(search) || u.Email.Contains(search) || u.IdNumber.Contains(search));
+            var users = await q.OrderBy(u => u.FullName).ToListAsync();
+
+            var stats = await _db.Transactions
+                .GroupBy(t => t.UserId)
+                .Select(g => new
+                {
+                    UserId = g.Key,
+                    Pending = g.Count(t => t.RequestStatus == "Pending"),
+                    Active = g.Count(t => t.RequestStatus == "Approved" && t.ReturnDate == null),
+                    Overdue = g.Count(t => t.RequestStatus == "Approved" && t.ReturnDate == null && t.DueDate < DateTime.Today),
+                    Total = g.Count()
+                }).ToListAsync();
+
             ViewBag.Search = search;
-            return View(await q.OrderBy(u => u.FullName).ToListAsync());
+            ViewBag.UserStats = stats.ToDictionary(x => x.UserId, x => x);
+            ViewBag.AdminIds = (await _users.GetUsersInRoleAsync(DbSeeder.AdminRole)).Select(u => u.Id).ToHashSet();
+            return View(users);
+        }
+
+        public async Task<IActionResult> Details(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return NotFound();
+            var user = await _users.FindByIdAsync(id);
+            if (user == null) return NotFound();
+
+            var tx = await _db.Transactions.Include(t => t.Book)
+                .Where(t => t.UserId == id)
+                .OrderByDescending(t => t.Id)
+                .ToListAsync();
+
+            ViewBag.IsAdmin = await _users.IsInRoleAsync(user, DbSeeder.AdminRole);
+            ViewBag.Pending = tx.Count(t => t.RequestStatus == "Pending");
+            ViewBag.Active = tx.Where(t => t.RequestStatus == "Approved" && t.ReturnDate == null).ToList();
+            ViewBag.Overdue = tx.Where(t => t.Status == "Overdue").ToList();
+            ViewBag.History = tx;
+            return View(user);
         }
 
         [HttpPost, ValidateAntiForgeryToken]

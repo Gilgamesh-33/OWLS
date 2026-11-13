@@ -1,0 +1,205 @@
+@model BorrowPageViewModel
+@{
+    ViewData["Title"] = "Borrow Books";
+    var books = Model.Books ?? new List<Book>();
+}
+<div class="page-header admin-page-header mb-4">
+    <div>
+        <h2 class="mb-1">Borrow Books</h2>
+        <p class="text-muted mb-0">Browse the DIHS library catalog, request books, and track your borrowing status in one place.</p>
+    </div>
+    <span class="catalog-count-badge"><i class="bi bi-collection me-1"></i>@books.Count book@(books.Count == 1 ? "" : "s") shown</span>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-hourglass-split"></i> Pending Requests</div><div class="stat-tile-value">@Model.PendingRequests.Count</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-journal-check"></i> Active Borrowed</div><div class="stat-tile-value">@Model.ActiveLoans.Count</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-exclamation-triangle"></i> Overdue</div><div class="stat-tile-value text-danger">@Model.OverdueLoans.Count</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-clock-history"></i> Total Records</div><div class="stat-tile-value">@Model.History.Count</div></div></div></div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12 col-xl-6">
+        <div class="card table-card h-100">
+            <div class="card-body p-4">
+                <h5 class="mb-1"><i class="bi bi-hourglass-split me-2"></i>Current Requests</h5>
+                <small class="text-muted">Pending borrow requests awaiting librarian approval</small>
+                <div class="table-responsive mt-3">
+                    <table class="table table-hover align-middle mb-0 pro-table">
+                        <thead><tr><th class="ps-3">Book</th><th>Requested</th><th class="pe-3">Status</th></tr></thead>
+                        <tbody>
+                            @foreach (var t in Model.PendingRequests)
+                            {
+                                <tr>
+                                    <td class="ps-3"><div class="fw-semibold">@t.Book?.Title</div><small class="text-muted">@t.Book?.Author</small></td>
+                                    <td>@t.BorrowDate.ToString("MMM dd, yyyy")</td>
+                                    <td class="pe-3"><span class="badge status-badge status-pending">Pending</span></td>
+                                </tr>
+                            }
+                            @if (!Model.PendingRequests.Any()) { <tr><td colspan="3" class="text-center text-muted py-4">No pending requests.</td></tr> }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-xl-6">
+        <div class="card table-card h-100">
+            <div class="card-body p-4">
+                <h5 class="mb-1"><i class="bi bi-journal-check me-2"></i>Active Borrowed Books &amp; Due Dates</h5>
+                <small class="text-muted">Books currently issued to you and their due dates</small>
+                <div class="table-responsive mt-3">
+                    <table class="table table-hover align-middle mb-0 pro-table">
+                        <thead><tr><th class="ps-3">Book</th><th>Due Date</th><th>Penalty</th><th class="pe-3">Status</th></tr></thead>
+                        <tbody>
+                            @foreach (var t in Model.ActiveLoans.Concat(Model.OverdueLoans).OrderBy(x => x.DueDate))
+                            {
+                                <tr class="@(t.Status == "Overdue" ? "table-danger" : "")">
+                                    <td class="ps-3"><div class="fw-semibold">@t.Book?.Title</div><small class="text-muted">Borrowed: @t.BorrowDate.ToString("MMM dd, yyyy")</small></td>
+                                    <td class="fw-semibold @(t.Status=="Overdue"?"text-danger":"")">@t.DueDate.ToString("MMM dd, yyyy")</td>
+                                    <td>@(t.CurrentPenalty > 0 ? "₱" + t.CurrentPenalty.ToString("N2") : "-")</td>
+                                    <td class="pe-3"><span class="badge status-badge @(t.Status=="Overdue"?"status-overdue":"status-borrowed")">@t.Status</span></td>
+                                </tr>
+                            }
+                            @if (!Model.ActiveLoans.Any() && !Model.OverdueLoans.Any()) { <tr><td colspan="4" class="text-center text-muted py-4">No active borrowed books.</td></tr> }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card filter-card mb-4 no-print">
+    <div class="card-body">
+        <h5 class="mb-1">Browse Book Catalog</h5><p class="text-muted small mb-3">Search by title, author, ISBN, or category, review availability, then submit a request for librarian approval.</p>
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-lg-4">
+                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input name="search" value="@Model.Search" class="form-control border-start-0 ps-0" placeholder="Book title, author, ISBN, category..." />
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Category</label>
+                <select name="category" class="form-select">
+                    <option value="">All categories</option>
+                    @foreach (var c in Model.Categories)
+                    {
+                        <option value="@c" selected="@(c == Model.Category)">@c</option>
+                    }
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-2">
+                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Sort by</label>
+                <select name="sort" class="form-select">
+                    <option value="" selected="@(string.IsNullOrEmpty(Model.Sort))">Title A-Z</option>
+                    <option value="title_desc" selected="@(Model.Sort == "title_desc")">Title Z-A</option>
+                    <option value="author" selected="@(Model.Sort == "author")">Author</option>
+                    <option value="year" selected="@(Model.Sort == "year")">Newest</option>
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-1">
+                <div class="form-check pt-lg-4 mb-1">
+                    <input type="checkbox" class="form-check-input" id="av" name="availableOnly" value="true" checked="@(Model.AvailableOnly)" />
+                    <label class="form-check-label small fw-semibold" for="av">Available</label>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-2 d-flex gap-2">
+                <button class="btn btn-dark flex-fill"><i class="bi bi-funnel me-1"></i> Apply</button>
+                <a asp-action="Borrow" class="btn btn-outline-secondary" title="Clear"><i class="bi bi-x-lg"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (books.Any())
+{
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4 catalog-grid mb-4">
+        @foreach (var b in books)
+        {
+            bool isPending = Model.MyPendingBookIds.Contains(b.Id);
+            bool isBorrowed = Model.MyBorrowedBookIds.Contains(b.Id);
+            <div class="col">
+                <div class="card h-100 book-card catalog-card">
+                    <a asp-controller="Books" asp-action="Details" asp-route-id="@b.Id" class="book-cover-link position-relative d-block" title="View book details">
+                        @if (!string.IsNullOrEmpty(b.CoverImagePath))
+                        {
+                            <img src="@b.CoverImagePath" class="book-cover" alt="@b.Title" />
+                        }
+                        else
+                        {
+                            <div class="book-cover book-cover-empty"><i class="bi bi-book"></i></div>
+                        }
+                        <div class="catalog-cover-badge">
+                            @if (b.AvailableCopies > 0) { <span class="badge bg-success">@b.AvailableCopies available</span> } else { <span class="badge bg-danger">Unavailable</span> }
+                        </div>
+                    </a>
+                    <div class="card-body d-flex flex-column">
+                        <div class="mb-1"><span class="catalog-category">@b.Category</span></div>
+                        <a asp-controller="Books" asp-action="Details" asp-route-id="@b.Id" class="book-title text-decoration-none mb-1">@b.Title</a>
+                        <div class="small text-muted mb-1"><i class="bi bi-person me-1"></i>@b.Author</div>
+                        <div class="small text-muted mb-2"><i class="bi bi-upc me-1"></i>@b.ISBN</div>
+                        <div class="mt-auto pt-2 d-flex justify-content-between align-items-center small text-muted catalog-meta">
+                            <span><i class="bi bi-calendar3 me-1"></i>@b.YearPublished</span>
+                            <span>@b.AvailableCopies/@b.TotalCopies copies</span>
+                        </div>
+                    </div>
+                    <div class="card-footer no-print bg-transparent border-top-0 pt-0 px-3 pb-3">
+                        <div class="d-grid gap-2">
+                            <a class="btn btn-sm btn-outline-secondary" asp-controller="Books" asp-action="Details" asp-route-id="@b.Id"><i class="bi bi-info-circle me-1"></i>View Details</a>
+                            @if (isPending)
+                            {
+                                <button class="btn btn-warning text-dark w-100" disabled><i class="bi bi-hourglass-split me-1"></i>Request Pending</button>
+                            }
+                            else if (isBorrowed)
+                            {
+                                <button class="btn btn-secondary w-100" disabled><i class="bi bi-journal-check me-1"></i>Currently Borrowed</button>
+                            }
+                            else
+                            {
+                                <form asp-controller="Transactions" asp-action="RequestBorrow" asp-route-bookId="@b.Id" method="post" class="m-0 borrow-request-form" data-book-title="@b.Title">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="returnTo" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+                                    <button type="submit" class="btn btn-primary w-100" @(b.AvailableCopies < 1 ? "disabled" : null)><i class="bi bi-bookmark-plus me-1"></i>Request to Borrow</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="card mb-4"><div class="card-body text-center py-5"><div class="empty-state-icon mb-2"><i class="bi bi-journal-x"></i></div><div class="fw-semibold mb-1">No books found</div><div class="text-muted small">Try adjusting your search, category, or filter options.</div><a asp-action="Borrow" class="btn btn-outline-primary btn-sm mt-3">Clear filters</a></div></div>
+}
+
+<div class="card table-card">
+    <div class="card-body p-4">
+        <h5 class="mb-1"><i class="bi bi-clock-history me-2"></i>Borrowing History</h5>
+        <small class="text-muted">All your requests and transactions</small>
+        <div class="table-responsive mt-3">
+            <table class="table table-hover align-middle mb-0 pro-table">
+                <thead><tr><th class="ps-3">Book</th><th>Borrowed</th><th>Due Date</th><th>Returned</th><th>Penalty</th><th class="pe-3">Status</th></tr></thead>
+                <tbody>
+                    @foreach (var t in Model.History)
+                    {
+                        <tr>
+                            <td class="ps-3">@t.Book?.Title</td>
+                            <td>@(t.RequestStatus == "Pending" ? "-" : t.BorrowDate.ToString("MMM dd, yyyy"))</td>
+                            <td>@(t.RequestStatus == "Pending" || t.RequestStatus == "Declined" ? "-" : t.DueDate.ToString("MMM dd, yyyy"))</td>
+                            <td>@(t.ReturnDate?.ToString("MMM dd, yyyy") ?? "-")</td>
+                            <td>@(t.CurrentPenalty > 0 ? "₱" + t.CurrentPenalty.ToString("N2") : "-")</td>
+                            <td class="pe-3"><span class="badge status-badge @(t.Status == "Returned" ? "status-returned" : t.Status == "Overdue" ? "status-overdue" : t.Status == "Pending" ? "status-pending" : t.Status == "Declined" ? "status-declined" : "status-borrowed")">@t.Status</span></td>
+                        </tr>
+                    }
+                    @if (!Model.History.Any()) { <tr><td colspan="6" class="text-center text-muted py-4">You have no borrowing records yet.</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+

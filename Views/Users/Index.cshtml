@@ -43,6 +43,10 @@
                     <th class="ps-4">User</th>
                     <th>ID Number</th>
                     <th>Email</th>
+                    <th>Pending</th>
+                    <th>Active</th>
+                    <th>Overdue</th>
+                    <th>History</th>
                     <th class="text-end pe-4">Actions</th>
                 </tr>
             </thead>
@@ -50,13 +54,21 @@
                 @foreach (var u in users)
                 {
                     var initials = string.IsNullOrWhiteSpace(u.FullName) ? "U" : string.Concat(u.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(s => char.ToUpperInvariant(s[0])));
+                    var statsMap = ViewBag.UserStats as System.Collections.IDictionary;
+                    dynamic st = statsMap != null && statsMap.Contains(u.Id) ? statsMap[u.Id] : null;
+                    int pending = st?.Pending ?? 0;
+                    int active = st?.Active ?? 0;
+                    int overdue = st?.Overdue ?? 0;
+                    int total = st?.Total ?? 0;
+                    var adminIds = ViewBag.AdminIds as HashSet<string> ?? new HashSet<string>();
+                    bool isAdmin = adminIds.Contains(u.Id);
                     <tr>
                         <td class="ps-4">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="user-avatar">@initials</div>
                                 <div>
-                                    <div class="fw-semibold">@u.FullName</div>
-                                    <small class="text-muted">Borrower account</small>
+                                    <div class="fw-semibold"><a asp-action="Details" asp-route-id="@u.Id" class="text-decoration-none">@u.FullName</a></div>
+                                    <small class="text-muted">@(isAdmin ? "Admin account" : "Borrower account")</small>
                                 </div>
                             </div>
                         </td>
@@ -76,18 +88,26 @@
                                 <span>@u.Email</span>
                             </div>
                         </td>
-                        <td class="text-end pe-4">
-                            <form asp-action="Delete" asp-route-id="@u.Id" method="post" class="d-inline" onsubmit="return confirm('Delete this user account?');">
-                                @Html.AntiForgeryToken()
-                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete</button>
-                            </form>
+                        <td>@if(pending > 0){<span class="badge bg-warning text-dark">@pending</span>}else{<span>0</span>}</td>
+                        <td>@active</td>
+                        <td>@if(overdue > 0){<span class="text-danger fw-semibold">@overdue</span>}else{<span>0</span>}</td>
+                        <td>@total</td>
+                        <td class="text-end pe-4 text-nowrap">
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@u.Id"><i class="bi bi-person-lines-fill me-1"></i>Details</a>
+                            @if (!isAdmin)
+                            {
+                                <form asp-action="Delete" asp-route-id="@u.Id" method="post" class="d-inline" onsubmit="return confirm('Delete this user account?');">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            }
                         </td>
                     </tr>
                 }
                 @if (!users.Any())
                 {
                     <tr>
-                        <td colspan="4" class="text-center py-5">
+                        <td colspan="8" class="text-center py-5">
                             <div class="empty-state-icon mb-2"><i class="bi bi-people"></i></div>
                             <div class="fw-semibold">No users found</div>
                             <div class="text-muted small">Try adjusting your search criteria.</div>

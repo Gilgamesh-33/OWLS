@@ -37,18 +37,56 @@ namespace OWLS.Controllers
             return View(await q.OrderByDescending(t => t.RequestStatus == "Pending").ThenByDescending(t => t.Id).ToListAsync());
         }
 
+        // BORROWER: dedicated borrow page + status/history
+        public async Task<IActionResult> Borrow(string search, string category, string sort, bool availableOnly = false)
+        {
+            if (User.IsInRole("Admin")) return RedirectToAction(nameof(Index));
+            var uid = _users.GetUserId(User);
+            var q = _db.Books.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(search))
+                q = q.Where(b => b.Title.Contains(search) || b.Author.Contains(search) || b.ISBN.Contains(search) || b.Category.Contains(search));
+            if (!string.IsNullOrWhiteSpace(category)) q = q.Where(b => b.Category == category);
+            if (availableOnly) q = q.Where(b => b.AvailableCopies > 0);
+            q = sort switch
+            {
+                "title_desc" => q.OrderByDescending(b => b.Title),
+                "author" => q.OrderBy(b => b.Author),
+                "year" => q.OrderByDescending(b => b.YearPublished),
+                _ => q.OrderBy(b => b.Title)
+            };
+
+            var myTx = await _db.Transactions.Include(t => t.Book)
+                .Where(t => t.UserId == uid)
+                .OrderByDescending(t => t.Id).ToListAsync();
+
+            var vm = new BorrowPageViewModel
+            {
+                Books = await q.ToListAsync(),
+                Categories = await _db.Books.Select(b => b.Category).Distinct().OrderBy(c => c).ToListAsync(),
+                Search = search,
+                Category = category,
+                Sort = sort,
+                AvailableOnly = availableOnly,
+                MyPendingBookIds = myTx.Where(t => t.RequestStatus == "Pending").Select(t => t.BookId).Distinct().ToList(),
+                MyBorrowedBookIds = myTx.Where(t => t.RequestStatus == "Approved" && t.ReturnDate == null).Select(t => t.BookId).Distinct().ToList(),
+                PendingRequests = myTx.Where(t => t.RequestStatus == "Pending").ToList(),
+                ActiveLoans = myTx.Where(t => t.RequestStatus == "Approved" && t.ReturnDate == null && t.Status == "Borrowed").ToList(),
+                OverdueLoans = myTx.Where(t => t.Status == "Overdue").ToList(),
+                History = myTx.OrderByDescending(t => t.BorrowDate).ThenByDescending(t => t.Id).ToList()
+            };
+            return View(vm);
+        }
+
         // BORROWER: own history
         public async Task<IActionResult> My()
         {
-            var uid = _users.GetUserId(User);
-            var list = await _db.Transactions.Include(t => t.Book)
-                .Where(t => t.UserId == uid).OrderByDescending(t => t.BorrowDate).ToListAsync();
-            return View(list);
+            if (User.IsInRole("Admin")) return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Borrow));
         }
 
         // BORROWER: request to borrow from catalog
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> RequestBorrow(int bookId)
+        public async Task<IActionResult> RequestBorrow(int bookId, string? returnTo)
         {
             if (User.IsInRole("Admin")) return Forbid();
             var uid = _users.GetUserId(User);
@@ -57,14 +95,14 @@ namespace OWLS.Controllers
             if (book.AvailableCopies < 1)
             {
                 TempData["Error"] = "No copies available for this book.";
-                return RedirectToAction("Index", "Books");
+                return SafeBorrowRedirect(returnTo);
             }
             bool duplicate = await _db.Transactions.AnyAsync(t => t.BookId == bookId && t.UserId == uid
                 && (t.RequestStatus == "Pending" || (t.RequestStatus == "Approved" && t.ReturnDate == null)));
             if (duplicate)
             {
                 TempData["Error"] = "You already have a pending or active borrow for this book.";
-                return RedirectToAction("Index", "Books");
+                return SafeBorrowRedirect(returnTo);
             }
 
             _db.Transactions.Add(new BorrowTransaction
@@ -76,8 +114,15 @@ namespace OWLS.Controllers
                 RequestStatus = "Pending"
             });
             await _db.SaveChangesAsync();
-            TempData["Success"] = "Borrow request submitted and marked as Pending.";
-            return RedirectToAction("Index", "Books");
+            TempData["Success"] = "Borrow request submitted and marked as Pending. Please wait for librarian approval.";
+            return SafeBorrowRedirect(returnTo);
+        }
+
+        private IActionResult SafeBorrowRedirect(string? returnTo)
+        {
+            if (!string.IsNullOrWhiteSpace(returnTo) && Url.IsLocalUrl(returnTo))
+                return LocalRedirect(returnTo);
+            return RedirectToAction(nameof(Borrow));
         }
 
         // CREATE (checkout)

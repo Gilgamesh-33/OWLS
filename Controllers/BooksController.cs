@@ -75,7 +75,14 @@ namespace OWLS.Controllers
         {
             if (id == null) return NotFound();
             var book = await _db.Books.FindAsync(id);
-            return book == null ? NotFound() : View(book);
+            if (book == null) return NotFound();
+            if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Admin"))
+            {
+                var uid = _users.GetUserId(User);
+                ViewBag.IsPending = await _db.Transactions.AnyAsync(t => t.UserId == uid && t.BookId == id && t.RequestStatus == "Pending");
+                ViewBag.IsBorrowed = await _db.Transactions.AnyAsync(t => t.UserId == uid && t.BookId == id && t.RequestStatus == "Approved" && t.ReturnDate == null);
+            }
+            return View(book);
         }
 
         // CREATE
