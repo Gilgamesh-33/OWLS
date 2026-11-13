@@ -1,62 +1,76 @@
 @model RegisterViewModel
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Create account";
 }
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card p-4 auth-card">
-            <h3 class="mb-3">Create Borrower Account</h3>
-            <form asp-action="Register" method="post">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                <div class="mb-3"><label asp-for="FullName" class="form-label"></label><input asp-for="FullName" class="form-control" /><span asp-validation-for="FullName" class="text-danger"></span></div>
-                <div class="mb-3"><label asp-for="IdNumber" class="form-label"></label><input asp-for="IdNumber" class="form-control" /></div>
-                <div class="mb-3"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger"></span></div>
-                <div class="row">
-                    <div class="col mb-3">
-                        <label asp-for="Password" class="form-label"></label>
-                        <div class="input-group">
-                            <input asp-for="Password" class="form-control" />
-                            <button type="button" class="btn btn-outline-secondary toggle-password" tabindex="-1" aria-label="Show password">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
-                        <span asp-validation-for="Password" class="text-danger"></span>
-                    </div>
-                    <div class="col mb-3">
-                        <label asp-for="ConfirmPassword" class="form-label"></label>
-                        <div class="input-group">
-                            <input asp-for="ConfirmPassword" class="form-control" />
-                            <button type="button" class="btn btn-outline-secondary toggle-password" tabindex="-1" aria-label="Show password">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
-                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-                    </div>
+<div class="auth-page">
+    <div class="auth-shell">
+        <div class="auth-header text-center">
+            <a asp-controller="Home" asp-action="Index" class="auth-brand text-decoration-none">
+                <span class="auth-brand-icon"><i class="bi bi-book-half"></i></span>
+                <span>OWLS</span>
+            </a>
+        </div>
+
+        <div class="card auth-card-pro border-0">
+            <div class="card-body auth-card-body">
+                <div class="mb-4">
+                    <h1 class="auth-title mb-0">Create borrower account</h1>
                 </div>
-                <button class="btn btn-primary w-100">Register</button>
-            </form>
+
+                <form asp-action="Register" method="post" novalidate class="auth-form">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3" role="alert"></div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="FullName" class="form-label">Full name</label>
+                            <div class="input-group auth-input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input asp-for="FullName" class="form-control" placeholder="e.g. Juan Dela Cruz" autocomplete="name" />
+                            </div>
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="IdNumber" class="form-label">ID number <span class="text-muted fw-normal">(optional)</span></label>
+                            <div class="input-group auth-input-group">
+                                <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                <input asp-for="IdNumber" class="form-control" placeholder="School ID" />
+                            </div>
+                            <span asp-validation-for="IdNumber" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Email" class="form-label">Email address</label>
+                            <div class="input-group auth-input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input asp-for="Email" class="form-control" placeholder="name@example.com" autocomplete="email" />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label asp-for="Password" class="form-label">Password</label>
+                            <div class="input-group auth-input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input asp-for="Password" class="form-control" type="password" placeholder="At least 6 characters" autocomplete="new-password" />
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label asp-for="ConfirmPassword" class="form-label">Confirm password</label>
+                            <div class="input-group auth-input-group">
+                                <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                                <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="Re-enter password" autocomplete="new-password" />
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary w-100 auth-submit mt-4" type="submit">
+                        <i class="bi bi-person-plus me-1"></i> Create account
+                    </button>
+                </form>
+
+                <div class="auth-divider my-4"><span>Already registered?</span></div>
+                <a asp-action="Login" class="btn btn-outline-primary w-100">Log in to your account</a>
+            </div>
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        document.querySelectorAll('.toggle-password').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var input = this.parentElement.querySelector('input');
-                var icon = this.querySelector('i');
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    icon.classList.remove('bi-eye');
-                    icon.classList.add('bi-eye-slash');
-                    this.setAttribute('aria-label', 'Hide password');
-                } else {
-                    input.type = 'password';
-                    icon.classList.remove('bi-eye-slash');
-                    icon.classList.add('bi-eye');
-                    this.setAttribute('aria-label', 'Show password');
-                }
-            });
-        });
-    </script>
-}

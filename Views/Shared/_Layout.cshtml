@@ -1,7 +1,12 @@
+@using System.Security.Claims
 @{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
     var fullWidth = ViewData["FullWidth"] as bool? ?? false;
     string Active(string c) => string.Equals(controller, c, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+    var displayName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "User";
+    var displayRole = User.IsInRole("Admin") ? "Librarian" : "Borrower";
+    var initials = string.Concat(displayName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(s => char.ToUpperInvariant(s[0])));
+    if (string.IsNullOrWhiteSpace(initials)) initials = "U";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -19,52 +24,64 @@
     <a href="#main-content" class="visually-hidden-focusable position-absolute top-0 start-0 m-2 px-3 py-2 bg-white border rounded shadow-sm" style="z-index:2000;color:var(--lb-dark);">Skip to main content</a>
 
     <header class="lb-nav no-print">
-        <div class="lb-nav-inner">
-            <a class="lb-brand" asp-controller="@(User.Identity?.IsAuthenticated == true ? "Books" : "Home")" asp-action="Index"><i class="bi bi-book-half"></i> OWLS</a>
+        <div class="container-fluid lb-nav-inner">
+            <a class="lb-brand" asp-controller="Home" asp-action="Index" aria-label="OWLS home">
+                <span class="lb-brand-mark"><i class="bi bi-book-half"></i></span>
+                <span class="lb-brand-text">OWLS</span>
+            </a>
 
-            <button class="lb-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#lbNav"
-                    aria-controls="lbNav" aria-expanded="false" aria-label="Toggle navigation">
-                <i class="bi bi-list fs-3"></i>
+            <button class="lb-toggler d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-controls="navMain" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="bi bi-list fs-4"></i>
             </button>
 
-            <div class="lb-nav-collapse collapse" id="lbNav">
-                <ul class="lb-links">
-                    @if (User.Identity?.IsAuthenticated != true)
-                    {
-                        <li><a asp-controller="Home" asp-action="Index" class="@Active("Home")">Home</a></li>
-                    }
-                    <li><a asp-controller="Books" asp-action="Index" class="@Active("Books")">Catalog</a></li>
-                    @if (User.Identity?.IsAuthenticated == true)
-                    {
+            <div class="collapse d-md-flex lb-nav-collapse" id="navMain">
+                <nav class="lb-nav-primary" aria-label="Primary">
+                    <ul class="lb-links">
+                        @if (!User.Identity.IsAuthenticated || User.IsInRole("Borrower"))
+                        {
+                            <li><a asp-controller="Home" asp-action="Index" class="@Active("Home")">Home</a></li>
+                            <li><a asp-controller="Books" asp-action="Index" class="@Active("Books")">Catalog</a></li>
+                            @if (User.IsInRole("Borrower"))
+                            {
+                                <li><a asp-controller="Transactions" asp-action="Borrow" class="@Active("Transactions")">Borrow Books</a></li>
+                            }
+                            @if (!User.Identity.IsAuthenticated)
+                            {
+                                <li><a asp-controller="Home" asp-action="Membership">Membership</a></li>
+                                <li><a asp-controller="Home" asp-action="OurStory">Our Story</a></li>
+                            }
+                        }
                         @if (User.IsInRole("Admin"))
                         {
+                            <li><a asp-controller="Books" asp-action="Index" class="@Active("Books")">Catalog</a></li>
                             <li><a asp-controller="Transactions" asp-action="Index" class="@Active("Transactions")">Transactions</a></li>
                             <li><a asp-controller="Users" asp-action="Index" class="@Active("Users")">Borrowers</a></li>
                             <li><a asp-controller="Reports" asp-action="Index" class="@Active("Reports")">Reports</a></li>
                         }
-                        else
-                        {
-                            <li><a asp-controller="Transactions" asp-action="Borrow" class="@Active("Transactions")">Borrow Books</a></li>
-                        }
-                    }
-                    else
-                    {
-                        <li><a asp-controller="Account" asp-action="Register" class="@Active("Account")">Membership</a></li>
-                        <li><a asp-controller="Home" asp-action="Index" asp-fragment="story">Our Story</a></li>
-                    }
-                </ul>
+                    </ul>
+                </nav>
 
                 <div class="lb-nav-actions">
-                    @if (User.Identity.IsAuthenticated)
+                    @if (User.Identity?.IsAuthenticated == true)
                     {
-                        <span class="lb-user"><i class="bi bi-person-circle"></i> @User.Identity.Name @(User.IsInRole("Admin") ? "(Admin)" : "")</span>
-                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
-                            <button type="submit" class="lb-btn lb-btn-filled lb-btn-nav">Logout</button>
+                        <div class="lb-user-display" title="@displayName">
+                            <span class="lb-user-avatar" aria-hidden="true">@initials</span>
+                            <span class="lb-user-text">
+                                <span class="lb-user-name">@displayName</span>
+                                <span class="lb-user-role">@displayRole</span>
+                            </span>
+                        </div>
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0 lb-logout-form">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="lb-btn lb-btn-outline lb-btn-nav lb-logout-btn" aria-label="Log out">
+                                <i class="bi bi-box-arrow-right"></i><span class="d-none d-lg-inline ms-1">Logout</span>
+                            </button>
                         </form>
                     }
                     else
                     {
-                        <a class="lb-btn lb-btn-filled lb-btn-nav" asp-controller="Books" asp-action="Index">Borrow Now</a>
+                        <a class="lb-btn lb-btn-outline lb-btn-nav" asp-controller="Account" asp-action="Login">Log in</a>
+                        <a class="lb-btn lb-btn-filled lb-btn-nav" asp-controller="Account" asp-action="Register">Sign up</a>
                     }
                 </div>
             </div>

@@ -3,15 +3,14 @@
     ViewData["Title"] = "Borrow Books";
     var books = Model.Books ?? new List<Book>();
 }
-<div class="page-header admin-page-header mb-4">
+<div class="page-header admin-page-header borrow-page-header mb-4">
     <div>
-        <h2 class="mb-1">Borrow Books</h2>
-        <p class="text-muted mb-0">Browse the DIHS library catalog, request books, and track your borrowing status in one place.</p>
+        <h2 class="mb-0">Borrow Books</h2>
     </div>
     <span class="catalog-count-badge"><i class="bi bi-collection me-1"></i>@books.Count book@(books.Count == 1 ? "" : "s") shown</span>
 </div>
 
-<div class="row g-3 mb-4">
+<div class="row g-3 mb-4 borrow-stats">
     <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-hourglass-split"></i> Pending Requests</div><div class="stat-tile-value">@Model.PendingRequests.Count</div></div></div></div>
     <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-journal-check"></i> Active Borrowed</div><div class="stat-tile-value">@Model.ActiveLoans.Count</div></div></div></div>
     <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-exclamation-triangle"></i> Overdue</div><div class="stat-tile-value text-danger">@Model.OverdueLoans.Count</div></div></div></div>
@@ -70,15 +69,14 @@
     </div>
 </div>
 
-<div class="card filter-card mb-4 no-print">
+<div class="card filter-card mb-4 no-print borrow-filter-card">
     <div class="card-body">
-        <h5 class="mb-1">Browse Book Catalog</h5><p class="text-muted small mb-3">Search by title, author, ISBN, or category, review availability, then submit a request for librarian approval.</p>
         <form method="get" class="row g-3 align-items-end">
-            <div class="col-lg-4">
+            <div class="col-lg-3">
                 <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Search</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                    <input name="search" value="@Model.Search" class="form-control border-start-0 ps-0" placeholder="Book title, author, ISBN, category..." />
+                <div class="search-field">
+                    <i class="bi bi-search search-icon"></i>
+                    <input name="search" value="@Model.Search" class="form-control" placeholder="Book title, author, ISBN, category..." aria-label="Search books" />
                 </div>
             </div>
             <div class="col-sm-6 col-lg-3">
@@ -92,7 +90,7 @@
                 </select>
             </div>
             <div class="col-sm-6 col-lg-2">
-                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Sort by</label>
+                <label class="form-label small fw-semibold text-uppercase text-dark mb-1">Sort</label>
                 <select name="sort" class="form-select">
                     <option value="" selected="@(string.IsNullOrEmpty(Model.Sort))">Title A-Z</option>
                     <option value="title_desc" selected="@(Model.Sort == "title_desc")">Title Z-A</option>
@@ -100,15 +98,16 @@
                     <option value="year" selected="@(Model.Sort == "year")">Newest</option>
                 </select>
             </div>
-            <div class="col-sm-6 col-lg-1">
-                <div class="form-check pt-lg-4 mb-1">
+            <div class="col-sm-6 col-lg-2">
+                <label class="form-label small fw-semibold text-uppercase text-muted mb-1 filter-check-label">Availability</label>
+                <div class="form-check filter-check mb-0">
                     <input type="checkbox" class="form-check-input" id="av" name="availableOnly" value="true" checked="@(Model.AvailableOnly)" />
-                    <label class="form-check-label small fw-semibold" for="av">Available</label>
+                    <label class="form-check-label fw-semibold mb-0" for="av">Available only</label>
                 </div>
             </div>
-            <div class="col-sm-6 col-lg-2 d-flex gap-2">
-                <button class="btn btn-dark flex-fill"><i class="bi bi-funnel me-1"></i> Apply</button>
-                <a asp-action="Borrow" class="btn btn-outline-secondary" title="Clear"><i class="bi bi-x-lg"></i></a>
+            <div class="col-sm-6 col-lg-2 d-flex gap-2 align-items-end">
+                <button class="btn btn-dark flex-fill filter-action-btn"><i class="bi bi-funnel me-1"></i> Apply</button>
+                <a asp-action="Borrow" class="btn btn-outline-secondary filter-action-btn" title="Clear filters" aria-label="Clear filters"><i class="bi bi-x-lg"></i></a>
             </div>
         </form>
     </div>

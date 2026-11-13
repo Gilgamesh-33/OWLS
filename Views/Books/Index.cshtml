@@ -7,8 +7,7 @@
 }
 <div class="page-header admin-page-header mb-4">
     <div>
-        <h2 class="mb-1">@(admin ? "Book Catalog" : "Browse Catalog")</h2>
-        <p class="text-muted mb-0">@(admin ? "Manage your library collection, availability, and records." : "Discover books and request to borrow from the library.")</p>
+        <h2 class="mb-0">@(admin ? "Book Catalog" : "Browse Catalog")</h2>
     </div>
     @if (admin)
     {
@@ -23,11 +22,11 @@
 <div class="card filter-card mb-4 no-print">
     <div class="card-body">
         <form method="get" class="row g-3 align-items-end">
-            <div class="col-lg-4">
+            <div class="col-lg-3">
                 <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Search</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                    <input name="search" value="@ViewBag.Search" class="form-control border-start-0 ps-0" placeholder="Title, author, ISBN, category..." />
+                <div class="search-field">
+                    <i class="bi bi-search search-icon"></i>
+                    <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Title, author, ISBN, category..." aria-label="Search books" />
                 </div>
             </div>
             <div class="col-sm-6 col-lg-3">
@@ -41,7 +40,7 @@
                 </select>
             </div>
             <div class="col-sm-6 col-lg-2">
-                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Sort by</label>
+                <label class="form-label small fw-semibold text-uppercase text-dark mb-1">Sort</label>
                 <select name="sort" class="form-select">
                     <option value="" selected="@(string.IsNullOrEmpty((string)ViewBag.Sort))">Title A-Z</option>
                     <option value="title_desc" selected="@((string)ViewBag.Sort == "title_desc")">Title Z-A</option>
@@ -49,15 +48,16 @@
                     <option value="year" selected="@((string)ViewBag.Sort == "year")">Newest</option>
                 </select>
             </div>
-            <div class="col-sm-6 col-lg-1">
-                <div class="form-check pt-lg-4 mb-1">
+            <div class="col-sm-6 col-lg-2">
+                <label class="form-label small fw-semibold text-uppercase text-muted mb-1 filter-check-label">Availability</label>
+                <div class="form-check filter-check mb-0">
                     <input type="checkbox" class="form-check-input" id="av" name="availableOnly" value="true" checked="@((bool)(ViewBag.AvailableOnly ?? false))" />
-                    <label class="form-check-label small fw-semibold" for="av">Available</label>
+                    <label class="form-check-label fw-semibold mb-0" for="av">Available only</label>
                 </div>
             </div>
-            <div class="col-sm-6 col-lg-2 d-flex gap-2">
-                <button class="btn btn-dark flex-fill"><i class="bi bi-funnel me-1"></i> Apply</button>
-                <a asp-action="Index" class="btn btn-outline-secondary" title="Clear"><i class="bi bi-x-lg"></i></a>
+            <div class="col-sm-6 col-lg-2 d-flex gap-2 align-items-end">
+                <button class="btn btn-dark flex-fill filter-action-btn"><i class="bi bi-funnel me-1"></i> Apply</button>
+                <a asp-action="Index" class="btn btn-outline-secondary filter-action-btn" title="Clear filters" aria-label="Clear filters"><i class="bi bi-x-lg"></i></a>
             </div>
         </form>
     </div>
