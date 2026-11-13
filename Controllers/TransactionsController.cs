@@ -25,13 +25,16 @@ namespace OWLS.Controllers
                 q = q.Where(t => t.Book.Title.Contains(search) || t.User.FullName.Contains(search) || t.User.IdNumber.Contains(search));
             q = status switch
             {
-                "Borrowed" => q.Where(t => t.ReturnDate == null && t.DueDate >= today),
-                "Overdue" => q.Where(t => t.ReturnDate == null && t.DueDate < today),
-                "Returned" => q.Where(t => t.ReturnDate != null),
+                "Pending" => q.Where(t => t.RequestStatus == "Pending"),
+                "Borrowed" => q.Where(t => t.RequestStatus == "Approved" && t.ReturnDate == null && t.DueDate >= today),
+                "Overdue" => q.Where(t => t.RequestStatus == "Approved" && t.ReturnDate == null && t.DueDate < today),
+                "Returned" => q.Where(t => t.RequestStatus == "Approved" && t.ReturnDate != null),
+                "Declined" => q.Where(t => t.RequestStatus == "Declined"),
                 _ => q
             };
             ViewBag.Search = search; ViewBag.Status = status;
-            return View(await q.OrderByDescending(t => t.BorrowDate).ThenByDescending(t => t.Id).ToListAsync());
+            ViewBag.PendingCount = await _db.Transactions.CountAsync(t => t.RequestStatus == "Pending");
+            return View(await q.OrderByDescending(t => t.RequestStatus == "Pending").ThenByDescending(t => t.Id).ToListAsync());
         }
 
         // BORROWER: own history
@@ -41,6 +44,40 @@ namespace OWLS.Controllers
             var list = await _db.Transactions.Include(t => t.Book)
                 .Where(t => t.UserId == uid).OrderByDescending(t => t.BorrowDate).ToListAsync();
             return View(list);
+        }
+
+        // BORROWER: request to borrow from catalog
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> RequestBorrow(int bookId)
+        {
+            if (User.IsInRole("Admin")) return Forbid();
+            var uid = _users.GetUserId(User);
+            var book = await _db.Books.FindAsync(bookId);
+            if (book == null) return NotFound();
+            if (book.AvailableCopies < 1)
+            {
+                TempData["Error"] = "No copies available for this book.";
+                return RedirectToAction("Index", "Books");
+            }
+            bool duplicate = await _db.Transactions.AnyAsync(t => t.BookId == bookId && t.UserId == uid
+                && (t.RequestStatus == "Pending" || (t.RequestStatus == "Approved" && t.ReturnDate == null)));
+            if (duplicate)
+            {
+                TempData["Error"] = "You already have a pending or active borrow for this book.";
+                return RedirectToAction("Index", "Books");
+            }
+
+            _db.Transactions.Add(new BorrowTransaction
+            {
+                BookId = bookId,
+                UserId = uid,
+                BorrowDate = DateTime.Today,
+                DueDate = DateTime.Today,
+                RequestStatus = "Pending"
+            });
+            await _db.SaveChangesAsync();
+            TempData["Success"] = "Borrow request submitted and marked as Pending.";
+            return RedirectToAction("Index", "Books");
         }
 
         // CREATE (checkout)
@@ -63,12 +100,46 @@ namespace OWLS.Controllers
 
             _db.Transactions.Add(new BorrowTransaction
             {
-                BookId = bookId, UserId = userId,
-                BorrowDate = DateTime.Today, DueDate = DateTime.Today.AddDays(days)
+                BookId = bookId,
+                UserId = userId,
+                BorrowDate = DateTime.Today,
+                DueDate = DateTime.Today.AddDays(days),
+                RequestStatus = "Approved"
             });
             book.AvailableCopies--;
             await _db.SaveChangesAsync();
             TempData["Success"] = "Book checked out.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Approve(int id, int days = LibrarySettings.DefaultLoanDays)
+        {
+            var t = await _db.Transactions.Include(x => x.Book).FirstOrDefaultAsync(x => x.Id == id);
+            if (t == null || t.RequestStatus != "Pending") return NotFound();
+            if (t.Book.AvailableCopies < 1)
+            {
+                TempData["Error"] = "Cannot approve: no copies available.";
+                return RedirectToAction(nameof(Index));
+            }
+            if (days < 1 || days > 60) days = LibrarySettings.DefaultLoanDays;
+            t.RequestStatus = "Approved";
+            t.BorrowDate = DateTime.Today;
+            t.DueDate = DateTime.Today.AddDays(days);
+            t.Book.AvailableCopies--;
+            await _db.SaveChangesAsync();
+            TempData["Success"] = "Borrow request accepted.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Decline(int id)
+        {
+            var t = await _db.Transactions.FindAsync(id);
+            if (t == null || t.RequestStatus != "Pending") return NotFound();
+            t.RequestStatus = "Declined";
+            await _db.SaveChangesAsync();
+            TempData["Success"] = "Borrow request declined.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -77,7 +148,7 @@ namespace OWLS.Controllers
         public async Task<IActionResult> Return(int id)
         {
             var t = await _db.Transactions.Include(x => x.Book).FirstOrDefaultAsync(x => x.Id == id);
-            if (t == null || t.ReturnDate != null) return NotFound();
+            if (t == null || t.ReturnDate != null || t.RequestStatus != "Approved") return NotFound();
             t.ReturnDate = DateTime.Today;
             int late = Math.Max(0, (t.ReturnDate.Value - t.DueDate.Date).Days);
             t.Penalty = late * LibrarySettings.PenaltyPerDay;
@@ -100,7 +171,7 @@ namespace OWLS.Controllers
         public async Task<IActionResult> Edit(int id, DateTime dueDate)
         {
             var t = await _db.Transactions.FindAsync(id);
-            if (t == null) return NotFound();
+            if (t == null || t.RequestStatus != "Approved") return NotFound();
             if (dueDate.Date < t.BorrowDate.Date)
             {
                 TempData["Error"] = "Due date cannot be before the borrow date.";
@@ -118,7 +189,7 @@ namespace OWLS.Controllers
         {
             var t = await _db.Transactions.Include(x => x.Book).FirstOrDefaultAsync(x => x.Id == id);
             if (t == null) return NotFound();
-            if (t.ReturnDate == null) t.Book.AvailableCopies++;   // restore copy if never returned
+            if (t.RequestStatus == "Approved" && t.ReturnDate == null) t.Book.AvailableCopies++;   // restore copy if active loan
             _db.Transactions.Remove(t);
             await _db.SaveChangesAsync();
             TempData["Success"] = "Transaction deleted.";

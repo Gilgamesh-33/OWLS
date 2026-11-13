@@ -1,60 +1,256 @@
 @model ReportViewModel
+@using System.Text.Json
 @{
     ViewData["Title"] = "Reports";
+    var trendLabels = JsonSerializer.Serialize(Model.BorrowTrend.Select(x => x.Label));
+    var trendValues = JsonSerializer.Serialize(Model.BorrowTrend.Select(x => x.Value));
+    var statusLabels = JsonSerializer.Serialize(Model.StatusBreakdown.Select(x => x.Label));
+    var statusValues = JsonSerializer.Serialize(Model.StatusBreakdown.Select(x => x.Value));
+    var topLabels = JsonSerializer.Serialize(Model.TopBooks.Select(x => x.Title));
+    var topValues = JsonSerializer.Serialize(Model.TopBooks.Select(x => x.Count));
 }
-<div class="page-header">
-    <h2>Library Reports</h2>
-    <button class="btn btn-outline-dark no-print" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
-</div>
-<form method="get" class="card filter-bar mb-4 no-print">
-    <div class="row g-2 align-items-end">
-        <div class="col-md-4"><label class="form-label small">From</label><input type="date" name="from" value="@Model.From.ToString("yyyy-MM-dd")" class="form-control" /></div>
-        <div class="col-md-4"><label class="form-label small">To</label><input type="date" name="to" value="@Model.To.ToString("yyyy-MM-dd")" class="form-control" /></div>
-        <div class="col-md-4"><button class="btn btn-dark w-100">Generate</button></div>
+<div class="report-print-page">
+    <div class="report-print-header d-none d-print-block mb-4">
+        <div class="d-flex align-items-center justify-content-between border-bottom pb-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="report-print-logo"><i class="bi bi-book-half"></i></div>
+                <div>
+                    <div class="report-print-brand">OWLS</div>
+                    <div class="text-muted">Online Web Library System</div>
+                    <div class="text-muted small">Dasmariñas Integrated High School</div>
+                </div>
+            </div>
+            <div class="text-end">
+                <div class="fw-semibold">Library Report</div>
+                <div class="text-muted small">Period: @Model.From.ToString("MMM dd, yyyy") – @Model.To.ToString("MMM dd, yyyy")</div>
+                <div class="text-muted small">Generated: @DateTime.Now.ToString("MMM dd, yyyy h:mm tt")</div>
+            </div>
+        </div>
     </div>
-</form>
-<p class="text-muted mb-3">Period: @Model.From.ToString("MMM dd, yyyy") - @Model.To.ToString("MMM dd, yyyy")</p>
-<div class="row g-3 mb-4">
-    <div class="col-md-3"><div class="card stat-card p-3 text-center"><div class="num">@Model.TotalBorrowed</div>Books borrowed</div></div>
-    <div class="col-md-3"><div class="card stat-card p-3 text-center"><div class="num">@Model.TotalReturned</div>Returned</div></div>
-    <div class="col-md-3"><div class="card stat-card p-3 text-center"><div class="num">@Model.OverdueCount</div>Overdue now</div></div>
-    <div class="col-md-3"><div class="card stat-card p-3 text-center"><div class="num">₱@Model.TotalPenalties.ToString("N2")</div>Penalties collected</div></div>
-</div>
-<div class="row g-3">
-    <div class="col-lg-5">
-        <div class="card p-3">
-            <h5>Top Borrowed Books</h5>
-            <table class="table table-sm mb-0">
-                <thead><tr><th>Title</th><th class="text-end">Times</th></tr></thead>
-                <tbody>
-                    @foreach (var b in Model.TopBooks)
+
+    <div class="page-header admin-page-header mb-4 no-print">
+        <div>
+            <h2 class="mb-1">Library Reports</h2>
+            <p class="text-muted mb-0">Track borrowing activity, demand, and outstanding issues for the selected period.</p>
+        </div>
+        <button class="btn btn-outline-dark no-print" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print / Save PDF</button>
+    </div>
+
+    <form method="get" class="card filter-card mb-4 no-print">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4"><label class="form-label small fw-semibold text-uppercase text-muted mb-1">From</label><input type="date" name="from" value="@Model.From.ToString("yyyy-MM-dd")" class="form-control" /></div>
+                <div class="col-md-4"><label class="form-label small fw-semibold text-uppercase text-muted mb-1">To</label><input type="date" name="to" value="@Model.To.ToString("yyyy-MM-dd")" class="form-control" /></div>
+                <div class="col-md-4"><button class="btn btn-dark w-100"><i class="bi bi-bar-chart-line me-1"></i> Generate Report</button></div>
+            </div>
+        </div>
+    </form>
+
+    <p class="text-muted mb-3 no-print">Period: <strong>@Model.From.ToString("MMM dd, yyyy")</strong> – <strong>@Model.To.ToString("MMM dd, yyyy")</strong></p>
+
+    <div class="row g-3 mb-4 report-summary-grid">
+        <div class="col-6 col-xl-3 report-print-block"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-journal-arrow-up"></i> Books Borrowed</div><div class="stat-tile-value">@Model.TotalBorrowed</div><small class="text-muted">Approved loans in period</small></div></div></div>
+        <div class="col-6 col-xl-3 report-print-block"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-journal-check"></i> Returned</div><div class="stat-tile-value">@Model.TotalReturned</div><small class="text-muted">Completed in period</small></div></div></div>
+        <div class="col-6 col-xl-3 report-print-block"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-exclamation-triangle"></i> Overdue Now</div><div class="stat-tile-value text-danger">@Model.OverdueCount</div><small class="text-muted">Active &amp; past due</small></div></div></div>
+        <div class="col-6 col-xl-3 report-print-block"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-cash-coin"></i> Penalties Collected</div><div class="stat-tile-value">₱@Model.TotalPenalties.ToString("N2")</div><small class="text-muted">Recorded in period</small></div></div></div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-lg-8 report-print-block">
+            <div class="card table-card h-100 report-card">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="mb-0">Borrowing Activity Trend</h5>
+                            <small class="text-muted">Approved borrows over the selected period</small>
+                        </div>
+                    </div>
+                    <div class="report-chart-wrap report-chart-trend"><canvas id="trendChart"></canvas></div>
+                    @if (!Model.BorrowTrend.Any() || Model.BorrowTrend.All(x => x.Value == 0))
                     {
-                        <tr><td>@b.Title</td><td class="text-end">@b.Count</td></tr>
+                        <div class="text-muted small mt-2">No borrowing activity recorded for this period.</div>
                     }
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-4 report-print-block">
+            <div class="card table-card h-100 report-card">
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <h5 class="mb-0">Loan &amp; Request Status</h5>
+                        <small class="text-muted">Current state snapshot and period returns</small>
+                    </div>
+                    <div class="report-chart-wrap report-chart-status"><canvas id="statusChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-lg-6 report-print-block">
+            <div class="card table-card h-100 report-card">
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <h5 class="mb-0">Top Borrowed Books</h5>
+                        <small class="text-muted">Most requested titles in the selected period</small>
+                    </div>
+                    <div class="report-chart-wrap report-chart-bars"><canvas id="topBooksChart"></canvas></div>
                     @if (!Model.TopBooks.Any())
                     {
-                        <tr><td colspan="2" class="text-muted">No data for this period.</td></tr>
+                        <div class="text-muted small mt-2">No data for this period.</div>
                     }
-                </tbody>
-            </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6 report-print-block">
+            <div class="card table-card h-100 report-card">
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <h5 class="mb-0">Top Borrowed Books (Table)</h5>
+                        <small class="text-muted">Detailed counts</small>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 pro-table">
+                            <thead><tr><th class="ps-3">Title</th><th class="text-end pe-3">Times Borrowed</th></tr></thead>
+                            <tbody>
+                                @foreach (var b in Model.TopBooks)
+                                {
+                                    <tr><td class="ps-3">@b.Title</td><td class="text-end pe-3 fw-semibold">@b.Count</td></tr>
+                                }
+                                @if (!Model.TopBooks.Any())
+                                {
+                                    <tr><td colspan="2" class="text-muted text-center py-4">No data for this period.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-lg-7">
-        <div class="card p-3">
-            <h5>Overdue Log</h5>
-            <table class="table table-sm mb-0">
-                <thead><tr><th>Book</th><th>Borrower</th><th>Due</th><th class="text-end">Penalty</th></tr></thead>
-                <tbody>
-                    @foreach (var t in Model.OverdueLog)
-                    {
-                        <tr><td>@t.Book.Title</td><td>@t.User.FullName</td><td>@t.DueDate.ToString("MMM dd")</td><td class="text-end">₱@t.CurrentPenalty.ToString("N2")</td></tr>
-                    }
-                    @if (!Model.OverdueLog.Any())
-                    {
-                        <tr><td colspan="4" class="text-muted">No overdue books.</td></tr>
-                    }
-                </tbody>
-            </table>
+
+    <div class="card table-card report-print-block report-card">
+        <div class="card-body p-4">
+            <div class="mb-3">
+                <h5 class="mb-0">Overdue Log</h5>
+                <small class="text-muted">Currently overdue approved loans</small>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 pro-table">
+                    <thead><tr><th class="ps-3">Book</th><th>Borrower</th><th>Due Date</th><th class="text-end pe-3">Current Penalty</th></tr></thead>
+                    <tbody>
+                        @foreach (var t in Model.OverdueLog)
+                        {
+                            <tr>
+                                <td class="ps-3">@t.Book.Title</td>
+                                <td>@t.User.FullName</td>
+                                <td>@t.DueDate.ToString("MMM dd, yyyy")</td>
+                                <td class="text-end pe-3 fw-semibold text-danger">₱@t.CurrentPenalty.ToString("N2")</td>
+                            </tr>
+                        }
+                        @if (!Model.OverdueLog.Any())
+                        {
+                            <tr><td colspan="4" class="text-muted text-center py-4">No overdue books at the moment.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            const palette = ['#2d452f', '#4c6a4b', '#7fa17d', '#cfe2ce', '#dc3545', '#6c757d', '#0d6efd'];
+            const trendLabels = @Html.Raw(trendLabels);
+            const trendValues = @Html.Raw(trendValues);
+            const statusLabels = @Html.Raw(statusLabels);
+            const statusValues = @Html.Raw(statusValues);
+            const topLabels = @Html.Raw(topLabels);
+            const topValues = @Html.Raw(topValues);
+
+            const trendEl = document.getElementById('trendChart');
+            if (trendEl) {
+                new Chart(trendEl, {
+                    type: 'line',
+                    data: {
+                        labels: trendLabels,
+                        datasets: [{
+                            label: 'Borrows',
+                            data: trendValues,
+                            borderColor: '#2d452f',
+                            backgroundColor: 'rgba(45,69,47,0.12)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#2d452f'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        devicePixelRatio: 2,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { precision: 0 } },
+                            x: { ticks: { maxTicksLimit: 10 } }
+                        }
+                    }
+                });
+            }
+
+            const statusEl = document.getElementById('statusChart');
+            if (statusEl) {
+                new Chart(statusEl, {
+                    type: 'doughnut',
+                    data: {
+                        labels: statusLabels,
+                        datasets: [{
+                            data: statusValues,
+                            backgroundColor: ['#4c6a4b', '#dc3545', '#2d452f', '#fad022', '#adb5bd'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        devicePixelRatio: 2,
+                        plugins: { legend: { position: 'bottom' } },
+                        cutout: '60%'
+                    }
+                });
+            }
+
+            const topEl = document.getElementById('topBooksChart');
+            if (topEl) {
+                new Chart(topEl, {
+                    type: 'bar',
+                    data: {
+                        labels: topLabels,
+                        datasets: [{
+                            label: 'Times Borrowed',
+                            data: topValues,
+                            backgroundColor: topValues.map((_, i) => palette[i % palette.length]),
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        devicePixelRatio: 2,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { beginAtZero: true, ticks: { precision: 0 } }
+                        }
+                    }
+                });
+            }
+        })();
+    </script>
+}

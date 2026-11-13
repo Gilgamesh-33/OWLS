@@ -20,7 +20,7 @@ namespace OWLS.Controllers
         public IActionResult Login(string returnUrl = null)
         {
             if (User.Identity != null && User.Identity.IsAuthenticated)
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "Books");
             ViewBag.ReturnUrl = returnUrl;
             return View();
         }
@@ -31,7 +31,11 @@ namespace OWLS.Controllers
             if (!ModelState.IsValid) return View(m);
             var result = await _signIn.PasswordSignInAsync(m.Email, m.Password, m.RememberMe, false);
             if (result.Succeeded)
-                return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl) : RedirectToAction("Index", "Home");
+            {
+                if (Url.IsLocalUrl(returnUrl) && returnUrl != "/" && !returnUrl.StartsWith("/Home", StringComparison.OrdinalIgnoreCase))
+                    return Redirect(returnUrl);
+                return RedirectToAction("Index", "Books");
+            }
             ModelState.AddModelError("", "Invalid email or password.");
             return View(m);
         }
@@ -40,7 +44,7 @@ namespace OWLS.Controllers
         public IActionResult Register()
         {
             if (User.Identity != null && User.Identity.IsAuthenticated)
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "Books");
             return View();
         }
 
@@ -54,7 +58,7 @@ namespace OWLS.Controllers
             {
                 await _users.AddToRoleAsync(user, DbSeeder.BorrowerRole);
                 await _signIn.SignInAsync(user, false);
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "Books");
             }
             foreach (var e in result.Errors) ModelState.AddModelError("", e.Description);
             return View(m);

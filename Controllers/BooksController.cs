@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OWLS.Data;
@@ -11,7 +12,8 @@ namespace OWLS.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IWebHostEnvironment _env;
-        public BooksController(ApplicationDbContext db, IWebHostEnvironment env) { _db = db; _env = env; }
+        private readonly UserManager<ApplicationUser> _users;
+        public BooksController(ApplicationDbContext db, IWebHostEnvironment env, UserManager<ApplicationUser> users) { _db = db; _env = env; _users = users; }
 
         private static readonly string[] AllowedExt = { ".jpg", ".jpeg", ".png", ".webp" };
 
@@ -60,6 +62,12 @@ namespace OWLS.Controllers
 
             ViewBag.Categories = await _db.Books.Select(b => b.Category).Distinct().OrderBy(c => c).ToListAsync();
             ViewBag.Search = search; ViewBag.Category = category; ViewBag.Sort = sort; ViewBag.AvailableOnly = availableOnly;
+            if (!User.IsInRole("Admin"))
+            {
+                var uid = _users.GetUserId(User);
+                ViewBag.MyPendingBookIds = await _db.Transactions.Where(t => t.UserId == uid && t.RequestStatus == "Pending").Select(t => t.BookId).ToListAsync();
+                ViewBag.MyBorrowedBookIds = await _db.Transactions.Where(t => t.UserId == uid && t.RequestStatus == "Approved" && t.ReturnDate == null).Select(t => t.BookId).ToListAsync();
+            }
             return View(await q.ToListAsync());
         }
 
