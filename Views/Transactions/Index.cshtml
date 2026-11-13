@@ -1,39 +1,57 @@
 @model IEnumerable<BorrowTransaction>
-@{ ViewData["Title"] = "Transactions"; }
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Borrowing Transactions</h2>
+@{
+    ViewData["Title"] = "Transactions";
+}
+<div class="page-header">
+    <h2>Borrowing Transactions</h2>
     <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg"></i> New Checkout</a>
 </div>
-<form method="get" class="card p-3 mb-3"><div class="row g-2">
-    <div class="col-md-6"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Search book, borrower or ID number..." /></div>
-    <div class="col-md-4"><select name="status" class="form-select">
-        <option value="">All statuses</option>
-        @foreach (var s in new[] { "Borrowed", "Overdue", "Returned" }) { <option value="@s" selected="@(s == ViewBag.Status)">@s</option> }
-    </select></div>
-    <div class="col-md-2"><button class="btn btn-dark w-100">Filter</button></div>
-</div></form>
-<div class="card"><div class="table-responsive">
-<table class="table table-hover align-middle mb-0">
-    <thead><tr><th>#</th><th>Book</th><th>Borrower</th><th>Borrowed</th><th>Due</th><th>Returned</th><th>Penalty</th><th>Status</th><th></th></tr></thead>
-    <tbody>
-    @foreach (var t in Model)
-    {
-        <tr>
-            <td>@t.Id</td><td>@t.Book.Title</td><td>@t.User.FullName<br /><small class="text-muted">@t.User.IdNumber</small></td>
-            <td>@t.BorrowDate.ToString("MMM dd, yyyy")</td><td>@t.DueDate.ToString("MMM dd, yyyy")</td>
-            <td>@(t.ReturnDate?.ToString("MMM dd, yyyy") ?? "-")</td>
-            <td>@(t.CurrentPenalty > 0 ? "₱" + t.CurrentPenalty.ToString("N2") : "-")</td>
-            <td><span class="badge @(t.Status == "Returned" ? "bg-secondary" : t.Status == "Overdue" ? "bg-danger" : "bg-primary")">@t.Status</span></td>
-            <td class="text-end text-nowrap">
-                @if (t.ReturnDate == null)
+<form method="get" class="card filter-bar mb-4">
+    <div class="row g-2">
+        <div class="col-md-6"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Search book, borrower or ID number..." /></div>
+        <div class="col-md-4">
+            <select name="status" class="form-select">
+                <option value="">All statuses</option>
+                @foreach (var s in new[] { "Borrowed", "Overdue", "Returned" })
                 {
-                    <form asp-action="Return" asp-route-id="@t.Id" method="post" class="d-inline"><button class="btn btn-sm btn-success">Return</button></form>
-                    <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@t.Id">Edit</a>
+                    <option value="@s" selected="@(s == ViewBag.Status)">@s</option>
                 }
-                <form asp-action="Delete" asp-route-id="@t.Id" method="post" class="d-inline" onsubmit="return confirm('Delete this transaction?');"><button class="btn btn-sm btn-outline-danger">Delete</button></form>
-            </td>
-        </tr>
-    }
-    @if (!Model.Any()) { <tr><td colspan="9" class="text-center text-muted py-4">No transactions found.</td></tr> }
-    </tbody>
-</table></div></div>
+            </select>
+        </div>
+        <div class="col-md-2"><button class="btn btn-dark w-100">Filter</button></div>
+    </div>
+</form>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>#</th><th>Book</th><th>Borrower</th><th>Borrowed</th><th>Due</th><th>Returned</th><th>Penalty</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var t in Model)
+                {
+                    <tr>
+                        <td>@t.Id</td>
+                        <td>@t.Book.Title</td>
+                        <td>@t.User.FullName<br /><small class="text-muted">@t.User.IdNumber</small></td>
+                        <td>@t.BorrowDate.ToString("MMM dd, yyyy")</td>
+                        <td>@t.DueDate.ToString("MMM dd, yyyy")</td>
+                        <td>@(t.ReturnDate?.ToString("MMM dd, yyyy") ?? "-")</td>
+                        <td>@(t.CurrentPenalty > 0 ? "₱" + t.CurrentPenalty.ToString("N2") : "-")</td>
+                        <td><span class="badge @(t.Status == "Returned" ? "bg-secondary" : t.Status == "Overdue" ? "bg-danger" : "bg-primary")">@t.Status</span></td>
+                        <td class="text-end text-nowrap">
+                            @if (t.ReturnDate == null)
+                            {
+                                <form asp-action="Return" asp-route-id="@t.Id" method="post" class="d-inline"><button class="btn btn-sm btn-success">Return</button></form>
+                                <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@t.Id">Edit</a>
+                            }
+                            <form asp-action="Delete" asp-route-id="@t.Id" method="post" class="d-inline" onsubmit="return confirm('Delete this transaction?');"><button class="btn btn-sm btn-outline-danger">Delete</button></form>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="9" class="text-center text-muted py-4">No transactions found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

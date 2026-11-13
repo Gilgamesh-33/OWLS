@@ -14,7 +14,16 @@ namespace OWLS.Controllers
         public AccountController(UserManager<ApplicationUser> u, SignInManager<ApplicationUser> s)
         { _users = u; _signIn = s; }
 
-        [HttpGet] public IActionResult Login(string returnUrl = null) { ViewBag.ReturnUrl = returnUrl; return View(); }
+        // Already signed in? Send them home instead of showing the login page.
+        // NoStore stops the browser's Back button from showing a cached login page.
+        [HttpGet, ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+        public IActionResult Login(string returnUrl = null)
+        {
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+                return RedirectToAction("Index", "Home");
+            ViewBag.ReturnUrl = returnUrl;
+            return View();
+        }
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel m, string returnUrl = null)
@@ -27,7 +36,13 @@ namespace OWLS.Controllers
             return View(m);
         }
 
-        [HttpGet] public IActionResult Register() => View();
+        [HttpGet, ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+        public IActionResult Register()
+        {
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+                return RedirectToAction("Index", "Home");
+            return View();
+        }
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel m)

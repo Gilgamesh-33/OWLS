@@ -1,11 +1,16 @@
-@{ ViewData["Title"] = "New Checkout"; }
-<h2>New Checkout</h2>
-<div class="card p-4" style="max-width:640px">
-<form asp-action="Create" method="post">
-    <div asp-validation-summary="All" class="text-danger"></div>
-    <div class="mb-3"><label class="form-label">Book</label><select name="bookId" class="form-select" asp-items="ViewBag.Books"><option value="">-- Select book --</option></select></div>
-    <div class="mb-3"><label class="form-label">Borrower</label><select name="userId" class="form-select" asp-items="ViewBag.Users"><option value="">-- Select borrower --</option></select></div>
-    <div class="mb-3"><label class="form-label">Loan period (days)</label><input name="days" type="number" value="@LibrarySettings.DefaultLoanDays" min="1" max="60" class="form-control" />
-        <div class="form-text">Overdue penalty: ₱@LibrarySettings.PenaltyPerDay.ToString("N2") per day.</div></div>
-    <button class="btn btn-primary">Check out</button> <a class="btn btn-secondary" asp-action="Index">Cancel</a>
-</form></div>
+@{
+    ViewData["Title"] = "New Checkout";
+}
+<div class="page-header"><h2>New Checkout</h2></div>
+<div class="card p-4 form-narrow">
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="All" class="text-danger"></div>
+        <div class="mb-3"><label class="form-label">Book</label><select name="bookId" class="form-select" asp-items="ViewBag.Books"><option value="">-- Select book --</option></select></div>
+        <div class="mb-3"><label class="form-label">Borrower</label><select name="userId" class="form-select" asp-items="ViewBag.Users"><option value="">-- Select borrower --</option></select></div>
+        <div class="mb-3">
+            <label class="form-label">Loan period (days)</label><input name="days" type="number" value="@LibrarySettings.DefaultLoanDays" min="1" max="60" class="form-control" />
+            <div class="form-text">Overdue penalty: ₱@LibrarySettings.PenaltyPerDay.ToString("N2") per day.</div>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary">Check out</button> <a class="btn btn-secondary" asp-action="Index">Cancel</a></div>
+    </form>
+</div>
