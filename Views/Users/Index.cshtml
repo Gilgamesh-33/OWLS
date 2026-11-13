@@ -5,8 +5,7 @@
 }
 <div class="page-header admin-page-header mb-4">
     <div>
-        <h2 class="mb-1">User Accounts</h2>
-        <p class="text-muted mb-0">Manage registered borrower accounts and review user details.</p>
+        <h2 class="mb-0">User Accounts</h2>
     </div>
     <span class="catalog-count-badge"><i class="bi bi-people me-1"></i>@users.Count account@(users.Count == 1 ? "" : "s")</span>
 </div>
@@ -16,14 +15,14 @@
         <form method="get" class="row g-3 align-items-end">
             <div class="col-lg-9">
                 <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Search</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                    <input name="search" value="@ViewBag.Search" class="form-control border-start-0 ps-0" placeholder="Search by full name, email, or ID number..." />
+                <div class="search-field">
+                    <i class="bi bi-search search-icon"></i>
+                    <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Search by full name, email, or ID number..." aria-label="Search borrowers" />
                 </div>
             </div>
-            <div class="col-lg-3 d-flex gap-2">
-                <button class="btn btn-dark flex-fill"><i class="bi bi-funnel me-1"></i> Search</button>
-                <a asp-action="Index" class="btn btn-outline-secondary" title="Clear"><i class="bi bi-x-lg"></i></a>
+            <div class="col-lg-3 d-flex gap-2 align-items-end">
+                <button class="btn btn-dark flex-fill filter-action-btn"><i class="bi bi-funnel me-1"></i> Search</button>
+                <a asp-action="Index" class="btn btn-outline-secondary filter-action-btn" title="Clear filters" aria-label="Clear filters"><i class="bi bi-x-lg"></i></a>
             </div>
         </form>
     </div>
