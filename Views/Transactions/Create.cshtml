@@ -8,8 +8,20 @@
 <div class="card p-4 form-narrow">
     <form asp-action="Create" method="post">
         <div asp-validation-summary="All" class="text-danger"></div>
-        <div class="mb-3"><label class="form-label">Book</label><select name="bookId" class="form-select" asp-items="ViewBag.Books"><option value="">-- Select book --</option></select></div>
-        <div class="mb-3"><label class="form-label">Borrower</label><select name="userId" class="form-select" asp-items="ViewBag.Users"><option value="">-- Select borrower --</option></select></div>
+        <div class="mb-3">
+            <label class="form-label" for="checkoutBook">Book</label>
+            <div class="catalog-style-control">
+                <i class="bi bi-book"></i>
+                <select id="checkoutBook" name="bookId" class="catalog-style-select" asp-items="ViewBag.Books"><option value="">-- Select book --</option></select>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="checkoutBorrower">Borrower</label>
+            <div class="catalog-style-control">
+                <i class="bi bi-person"></i>
+                <select id="checkoutBorrower" name="userId" class="catalog-style-select" asp-items="ViewBag.Users"><option value="">-- Select borrower --</option></select>
+            </div>
+        </div>
         <div class="mb-3">
             <label class="form-label">Loan period (days)</label><input name="days" type="number" value="@LibrarySettings.DefaultLoanDays" min="1" max="60" class="form-control" />
             <div class="form-text">Overdue penalty: ₱@LibrarySettings.PenaltyPerDay.ToString("N2") per day.</div>
