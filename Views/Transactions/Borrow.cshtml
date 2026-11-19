@@ -79,23 +79,29 @@
                 </div>
             </div>
             <div class="col-sm-6 col-lg-3">
-                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Category</label>
-                <select name="category" class="form-select">
-                    <option value="">All categories</option>
-                    @foreach (var c in Model.Categories)
-                    {
-                        <option value="@c" selected="@(c == Model.Category)">@c</option>
-                    }
-                </select>
+                <div class="catalog-style-control">
+                    <label for="borrowCategory" class="visually-hidden">Category</label>
+                    <i class="bi bi-tag"></i>
+                    <select id="borrowCategory" name="category" class="catalog-style-select">
+                        <option value="">All categories</option>
+                        @foreach (var c in Model.Categories)
+                        {
+                            <option value="@c" selected="@(c == Model.Category)">@c</option>
+                        }
+                    </select>
+                </div>
             </div>
             <div class="col-sm-6 col-lg-2">
-                <label class="form-label small fw-semibold text-uppercase text-dark mb-1">Sort</label>
-                <select name="sort" class="form-select">
-                    <option value="" selected="@(string.IsNullOrEmpty(Model.Sort))">Title A-Z</option>
-                    <option value="title_desc" selected="@(Model.Sort == "title_desc")">Title Z-A</option>
-                    <option value="author" selected="@(Model.Sort == "author")">Author</option>
-                    <option value="year" selected="@(Model.Sort == "year")">Newest</option>
-                </select>
+                <div class="catalog-style-control">
+                    <label for="borrowSort" class="visually-hidden">Sort</label>
+                    <i class="bi bi-sort-down"></i>
+                    <select id="borrowSort" name="sort" class="catalog-style-select">
+                        <option value="" selected="@(string.IsNullOrEmpty(Model.Sort))">Title A-Z</option>
+                        <option value="title_desc" selected="@(Model.Sort == "title_desc")">Title Z-A</option>
+                        <option value="author" selected="@(Model.Sort == "author")">Author</option>
+                        <option value="year" selected="@(Model.Sort == "year")">Newest</option>
+                    </select>
+                </div>
             </div>
             <div class="col-sm-6 col-lg-2">
                 <label class="form-label small fw-semibold text-uppercase text-muted mb-1 filter-check-label">Availability</label>

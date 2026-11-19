@@ -1,0 +1,62 @@
+/* =====================================================================
+   OWLS - BorrowerSearch.css
+   Typeahead borrower picker for the admin checkout form. Reuses the
+   catalog-style-search input and adds only the suggestion dropdown.
+   ===================================================================== */
+.borrower-search { position: relative; }
+.borrower-search [hidden] { display: none !important; }
+
+.borrower-search-input { text-overflow: ellipsis; }
+
+.borrower-suggestions {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    max-height: 290px;
+    overflow-y: auto;
+    padding: .35rem;
+    background: #fff;
+    border: 1px solid rgba(45, 69, 47, .14);
+    border-radius: 14px;
+    box-shadow: 0 12px 28px rgba(30, 50, 32, .14);
+}
+
+.borrower-option {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: .1rem .6rem;
+    width: 100%;
+    padding: .6rem .7rem;
+    text-align: left;
+    color: #1f2e21;
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    font: inherit;
+}
+
+.borrower-option:hover,
+.borrower-option.is-active { background: #eef3ec; }
+
+.borrower-option:focus-visible { outline: 2px solid #2d452f; outline-offset: 1px; }
+
+.borrower-option-name { font-size: .9rem; font-weight: 600; line-height: 1.25; }
+.borrower-option-meta { grid-column: 1; font-size: .78rem; line-height: 1.25; color: #6c7a6c; }
+.borrower-option-check { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: #2d452f; opacity: 0; }
+.borrower-option.is-active .borrower-option-check { opacity: 1; }
+
+.borrower-empty { padding: .8rem .75rem; font-size: .85rem; color: #6c7a6c; }
+
+.borrower-error { margin-top: .35rem; font-size: .82rem; color: #b23b48; }
+.borrower-error[hidden] { display: none !important; }
+
+[data-bs-theme="dark"] .borrower-suggestions { background: #1b261d; border-color: rgba(191, 224, 188, .16); }
+[data-bs-theme="dark"] .borrower-option { color: #e8f2e7; }
+[data-bs-theme="dark"] .borrower-option:hover,
+[data-bs-theme="dark"] .borrower-option.is-active { background: #253728; }
+[data-bs-theme="dark"] .borrower-option-meta,
+[data-bs-theme="dark"] .borrower-empty { color: #9db39c; }
+[data-bs-theme="dark"] .borrower-option-check { color: #cfe2ce; }

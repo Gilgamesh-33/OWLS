@@ -5,11 +5,35 @@
     Title = "New Checkout",
     Subtitle = "Check out a book to a borrower and set its due date."
 })
+<link rel="stylesheet" href="~/css/BorrowerSearch.css" asp-append-version="true" />
 <div class="card p-4 form-narrow">
     <form asp-action="Create" method="post">
         <div asp-validation-summary="All" class="text-danger"></div>
-        <div class="mb-3"><label class="form-label">Book</label><select name="bookId" class="form-select" asp-items="ViewBag.Books"><option value="">-- Select book --</option></select></div>
-        <div class="mb-3"><label class="form-label">Borrower</label><select name="userId" class="form-select" asp-items="ViewBag.Users"><option value="">-- Select borrower --</option></select></div>
+        <div class="mb-3">
+            <label class="form-label" for="checkoutBook">Book</label>
+            <div class="catalog-style-control">
+                <i class="bi bi-book"></i>
+                <select id="checkoutBook" name="bookId" class="catalog-style-select" asp-items="ViewBag.Books"><option value="">-- Select book --</option></select>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="borrowerSearch">Borrower</label>
+            <input type="hidden" id="checkoutBorrower" name="userId" value="@ViewBag.SelectedBorrowerId" />
+            <div class="catalog-style-search borrower-search" id="borrowerSearchWrap">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input id="borrowerSearch" type="text" class="borrower-search-input" role="combobox"
+                       aria-autocomplete="list" aria-expanded="false" aria-controls="borrowerSuggestions"
+                       autocomplete="off" spellcheck="false"
+                       placeholder="Search by name, ID number, or email..."
+                       value="@ViewBag.BorrowerSearchText" />
+                <button type="button" class="catalog-style-search-clear" id="borrowerSearchClear" aria-label="Clear borrower search" hidden>
+                    <i class="bi bi-x" aria-hidden="true"></i>
+                </button>
+                <div id="borrowerSuggestions" class="borrower-suggestions" role="listbox" aria-label="Borrower search results" hidden></div>
+            </div>
+            <div id="borrowerError" class="borrower-error" role="alert" hidden></div>
+            <div class="form-text">Start typing to search. Use the arrow keys and Enter, or click a result to select a borrower.</div>
+        </div>
         <div class="mb-3">
             <label class="form-label">Loan period (days)</label><input name="days" type="number" value="@LibrarySettings.DefaultLoanDays" min="1" max="60" class="form-control" />
             <div class="form-text">Overdue penalty: ₱@LibrarySettings.PenaltyPerDay.ToString("N2") per day.</div>
@@ -17,3 +41,195 @@
         <div class="form-actions"><button class="btn btn-primary">Check out</button> <a class="btn btn-secondary" asp-action="Index">Cancel</a></div>
     </form>
 </div>
+
+@section Scripts {
+    <script>
+    (function () {
+        const input = document.getElementById('borrowerSearch');
+        if (!input) return;
+        const form = input.closest('form');
+        const hidden = document.getElementById('checkoutBorrower');
+        const list = document.getElementById('borrowerSuggestions');
+        const clearBtn = document.getElementById('borrowerSearchClear');
+        const errorBox = document.getElementById('borrowerError');
+        const endpoint = '@Url.Action("BorrowerSearch", "Transactions")';
+
+        let items = [];
+        let active = -1;
+        let timer = null;
+        let controller = null;
+        let selectedLabel = input.value;
+        const cache = new Map();
+
+        function openList() {
+            list.hidden = false;
+            input.setAttribute('aria-expanded', 'true');
+        }
+
+        function closeList() {
+            list.hidden = true;
+            input.setAttribute('aria-expanded', 'false');
+            input.removeAttribute('aria-activedescendant');
+            active = -1;
+        }
+
+        function showError(message) {
+            errorBox.textContent = message || '';
+            errorBox.hidden = !message;
+        }
+
+        function labelFor(item) {
+            return (item.fullName || '') + (item.idNumber ? ' \u2014 ' + item.idNumber : '');
+        }
+
+        function render(results, message) {
+            items = Array.isArray(results) ? results : [];
+            list.textContent = '';
+            active = -1;
+            input.removeAttribute('aria-activedescendant');
+
+            if (!items.length) {
+                const empty = document.createElement('div');
+                empty.className = 'borrower-empty';
+                empty.setAttribute('role', 'presentation');
+                empty.textContent = message || 'No borrowers found.';
+                list.appendChild(empty);
+            } else {
+                items.forEach(function (item, index) {
+                    const option = document.createElement('button');
+                    option.type = 'button';
+                    option.className = 'borrower-option';
+                    option.id = 'borrower-option-' + index;
+                    option.setAttribute('role', 'option');
+                    option.setAttribute('aria-selected', 'false');
+
+                    const name = document.createElement('span');
+                    name.className = 'borrower-option-name';
+                    name.textContent = item.fullName || '';
+
+                    const meta = document.createElement('span');
+                    meta.className = 'borrower-option-meta';
+                    meta.textContent = [item.idNumber, item.email].filter(Boolean).join(' · ');
+
+                    const check = document.createElement('i');
+                    check.className = 'bi bi-check-lg borrower-option-check';
+                    check.setAttribute('aria-hidden', 'true');
+
+                    option.append(name, meta, check);
+                    option.addEventListener('mousedown', function (e) { e.preventDefault(); });
+                    option.addEventListener('click', function () { select(index); });
+                    list.appendChild(option);
+                });
+            }
+            openList();
+        }
+
+        function setActive(index) {
+            if (!items.length) return;
+            active = (index + items.length) % items.length;
+            list.querySelectorAll('.borrower-option').forEach(function (option, i) {
+                const on = i === active;
+                option.classList.toggle('is-active', on);
+                option.setAttribute('aria-selected', on ? 'true' : 'false');
+                if (on) option.scrollIntoView({ block: 'nearest' });
+            });
+            input.setAttribute('aria-activedescendant', 'borrower-option-' + active);
+        }
+
+        async function search(term) {
+            const key = term.toLowerCase();
+            if (cache.has(key)) { render(cache.get(key)); return; }
+            if (controller) controller.abort();
+            controller = new AbortController();
+            try {
+                const response = await fetch(endpoint + '?q=' + encodeURIComponent(term), {
+                    signal: controller.signal,
+                    headers: { 'X-Requested-With': 'fetch' }
+                });
+                if (!response.ok) throw new Error('search failed');
+                const data = await response.json();
+                const results = Array.isArray(data.items) ? data.items : [];
+                cache.set(key, results);
+                if (input.value.trim() === term) render(results);
+            } catch (err) {
+                if (err.name !== 'AbortError') render([], 'Could not load borrowers. Please try again.');
+            }
+        }
+
+        function scheduleSearch() {
+            const term = input.value.trim();
+            if (hidden.value && input.value !== selectedLabel) {
+                hidden.value = '';
+                selectedLabel = input.value;
+            }
+            clearBtn.hidden = term.length === 0;
+            showError('');
+            clearTimeout(timer);
+            timer = setTimeout(function () { search(term); }, 120);
+        }
+
+        function select(index) {
+            const item = items[index];
+            if (!item) return;
+            hidden.value = item.id;
+            selectedLabel = labelFor(item);
+            input.value = selectedLabel;
+            clearBtn.hidden = false;
+            showError('');
+            closeList();
+            input.focus();
+        }
+
+        input.addEventListener('input', scheduleSearch);
+        input.addEventListener('focus', function () {
+            if (!hidden.value) {
+                clearTimeout(timer);
+                timer = setTimeout(function () { search(input.value.trim()); }, 80);
+            } else {
+                openList();
+            }
+        });
+        input.addEventListener('blur', function () { setTimeout(closeList, 150); });
+
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (list.hidden) { clearTimeout(timer); search(input.value.trim()); }
+                else setActive(active + 1);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setActive(active - 1);
+            } else if (e.key === 'Enter') {
+                if (!list.hidden && active >= 0) { e.preventDefault(); select(active); }
+                else if (!list.hidden && items.length === 1) { e.preventDefault(); select(0); }
+            } else if (e.key === 'Escape') {
+                closeList();
+            }
+        });
+
+        clearBtn.addEventListener('click', function () {
+            hidden.value = '';
+            input.value = '';
+            selectedLabel = '';
+            clearBtn.hidden = true;
+            showError('');
+            input.focus();
+            search('');
+        });
+
+        form.addEventListener('submit', function (e) {
+            if (!hidden.value) {
+                e.preventDefault();
+                showError('Select a borrower from the search results.');
+                input.focus();
+                clearTimeout(timer);
+                search(input.value.trim());
+            }
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.borrower-search')) closeList();
+        });
+    })();
+    </script>
+}
