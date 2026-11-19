@@ -1209,6 +1209,19 @@ body {
 
 .modal-backdrop.show { opacity: .45; backdrop-filter: blur(2px); }
 
+/* Destructive confirmation card: centered, tinted icon, dimmed backdrop */
+.delete-confirm-modal .modal-content {
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.lb-delete-icon {
+    width: 44px;
+    height: 44px;
+    background: rgba(var(--bs-danger-rgb), .1);
+    color: var(--bs-danger);
+}
+
 
 .borrow-section-hint { color: var(--lb-text); }
 .card:focus-within { box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .12); }
