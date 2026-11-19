@@ -1,11 +1,11 @@
 @model BorrowPageViewModel
 @{
-    ViewData["Title"] = "Borrow Books";
+    ViewData["Title"] = "Your Library";
     var books = Model.Books ?? new List<Book>();
 }
 @await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
-    Title = "Borrow Books",
-    Subtitle = "Find a book, check its availability, and send a borrow request.",
+    Title = "Your Library",
+    Subtitle = "Track your requests and loans, then find your next book.",
     Actions = @<span class="catalog-count-badge"><i class="bi bi-collection me-1"></i>@books.Count book@(books.Count == 1 ? "" : "s") shown</span>
 })
 
@@ -13,7 +13,7 @@
     <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-hourglass-split"></i> Pending Requests</div><div class="stat-tile-value">@Model.PendingRequests.Count</div></div></div></div>
     <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-journal-check"></i> Active Borrowed</div><div class="stat-tile-value">@Model.ActiveLoans.Count</div></div></div></div>
     <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-exclamation-triangle"></i> Overdue</div><div class="stat-tile-value text-danger">@Model.OverdueLoans.Count</div></div></div></div>
-    <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-clock-history"></i> Total Records</div><div class="stat-tile-value">@Model.History.Count</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-clock-history"></i> Past Records</div><div class="stat-tile-value">@Model.History.Count</div></div></div></div>
 </div>
 
 <div class="row g-4 mb-4">
@@ -75,7 +75,7 @@
                 <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Search</label>
                 <div class="search-field">
                     <i class="bi bi-search search-icon"></i>
-                    <input name="search" value="@Model.Search" class="form-control" placeholder="Book title, author, ISBN, category..." aria-label="Search books" />
+                    <input name="search" value="@Model.Search" class="form-control" placeholder="Book title, author, ISBN, category..." aria-label="Search books" data-live-search />
                 </div>
             </div>
             <div class="col-sm-6 col-lg-3">
@@ -177,8 +177,8 @@ else
 
 <div class="card table-card">
     <div class="card-body p-4">
-        <h5 class="mb-1"><i class="bi bi-clock-history me-2"></i>Borrowing History</h5>
-        <small class="text-muted">All your requests and transactions</small>
+        <h5 class="mb-1"><i class="bi bi-clock-history me-2"></i>Past Borrowings</h5>
+        <small class="text-muted">Returned and declined requests — active items are shown above</small>
         <div class="table-responsive mt-3">
             <table class="table table-hover align-middle mb-0 pro-table">
                 <thead><tr><th class="ps-3">Book</th><th>Borrowed</th><th>Due Date</th><th>Returned</th><th>Penalty</th><th class="pe-3">Status</th></tr></thead>
@@ -194,7 +194,7 @@ else
                             <td class="pe-3"><span class="badge status-badge @(t.Status == "Returned" ? "status-returned" : t.Status == "Overdue" ? "status-overdue" : t.Status == "Pending" ? "status-pending" : t.Status == "Declined" ? "status-declined" : "status-borrowed")">@t.Status</span></td>
                         </tr>
                     }
-                    @if (!Model.History.Any()) { <tr><td colspan="6" class="text-center text-muted py-4">You have no borrowing records yet.</td></tr> }
+                    @if (!Model.History.Any()) { <tr><td colspan="6" class="text-center text-muted py-4">No completed borrowings yet.</td></tr> }
                 </tbody>
             </table>
         </div>

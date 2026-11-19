@@ -46,10 +46,14 @@ namespace OWLS.Controllers
         // READ + SEARCH + FILTER + SORT
         public async Task<IActionResult> Index(string search, string category, string sort, bool availableOnly = false)
         {
-            var q = _db.Books.AsQueryable();
+            bool admin = User.IsInRole("Admin");
+            bool archivedView = admin && string.Equals(category, "Archived", StringComparison.OrdinalIgnoreCase);
+
+            // Archived titles are hidden from the active catalog. Admins can open them through the Archived category.
+            var q = _db.Books.Where(b => b.IsArchived == archivedView);
             if (!string.IsNullOrWhiteSpace(search))
                 q = q.Where(b => b.Title.Contains(search) || b.Author.Contains(search) || b.ISBN.Contains(search) || b.Category.Contains(search));
-            if (!string.IsNullOrWhiteSpace(category)) q = q.Where(b => b.Category == category);
+            if (!archivedView && !string.IsNullOrWhiteSpace(category)) q = q.Where(b => b.Category == category);
             if (availableOnly) q = q.Where(b => b.AvailableCopies > 0);
 
             q = sort switch
@@ -60,9 +64,14 @@ namespace OWLS.Controllers
                 _ => q.OrderBy(b => b.Title)
             };
 
-            ViewBag.Categories = await _db.Books.Select(b => b.Category).Distinct().OrderBy(c => c).ToListAsync();
+            var categories = await _db.Books.Where(b => !b.IsArchived)
+                .Select(b => b.Category).Distinct().OrderBy(c => c).ToListAsync();
+            if (admin) categories.Add("Archived");
+            ViewBag.Categories = categories;
             ViewBag.Search = search; ViewBag.Category = category; ViewBag.Sort = sort; ViewBag.AvailableOnly = availableOnly;
-            if (!User.IsInRole("Admin"))
+            ViewBag.ArchivedView = archivedView;
+            ViewBag.ArchivedCount = await _db.Books.CountAsync(b => b.IsArchived);
+            if (!admin)
             {
                 var uid = _users.GetUserId(User);
                 ViewBag.MyPendingBookIds = await _db.Transactions.Where(t => t.UserId == uid && t.RequestStatus == "Pending").Select(t => t.BookId).ToListAsync();
@@ -153,28 +162,35 @@ namespace OWLS.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // DELETE
+        // ARCHIVE: keep the title (and its transaction history) but remove it from the active catalog.
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Archive(int? id)
         {
             if (id == null) return NotFound();
             var book = await _db.Books.FindAsync(id);
             return book == null ? NotFound() : View(book);
         }
 
-        [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken, Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        [HttpPost, ActionName("Archive"), ValidateAntiForgeryToken, Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ArchiveConfirmed(int id)
         {
-            if (await _db.Transactions.AnyAsync(t => t.BookId == id))
-            {
-                TempData["Error"] = "Cannot delete: this book has transaction history.";
-                return RedirectToAction(nameof(Index));
-            }
             var book = await _db.Books.FindAsync(id);
-            DeleteCover(book.CoverImagePath);
-            if (book != null) { _db.Books.Remove(book); await _db.SaveChangesAsync(); }
-            TempData["Success"] = "Book deleted.";
-            return RedirectToAction(nameof(Index));
+            if (book == null) return NotFound();
+            book.IsArchived = true;
+            await _db.SaveChangesAsync();
+            TempData["Success"] = "Book archived. It can be restored from the Archived category.";
+            return RedirectToAction(nameof(Index), new { category = "Archived" });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Restore(int id)
+        {
+            var book = await _db.Books.FindAsync(id);
+            if (book == null) return NotFound();
+            book.IsArchived = false;
+            await _db.SaveChangesAsync();
+            TempData["Success"] = "Book restored to the catalog.";
+            return RedirectToAction(nameof(Index), new { category = "Archived" });
         }
     }
 }

@@ -117,7 +117,7 @@ namespace OWLS.Controllers
                 }
             }
 
-            var books = await _db.Books.AsNoTracking().ToListAsync();
+            var books = await _db.Books.AsNoTracking().Where(b => !b.IsArchived).ToListAsync();
             var inventoryByCategory = books
                 .GroupBy(b => b.Category ?? "Uncategorized")
                 .Select(g => new CategoryPoint

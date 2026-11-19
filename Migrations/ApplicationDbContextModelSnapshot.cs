@@ -259,6 +259,9 @@ namespace OWLS.Migrations
                     .HasMaxLength(20)
                     .HasColumnType("nvarchar(20)");
 
+                b.Property<bool>("IsArchived")
+                    .HasColumnType("bit");
+
                 b.Property<string>("Title")
                     .IsRequired()
                     .HasMaxLength(200)

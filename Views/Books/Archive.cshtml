@@ -1,16 +1,30 @@
 @model Book
 @{
-    ViewData["Title"] = "Delete Book";
+    ViewData["Title"] = "Archive Book";
 }
 @await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
-    Title = "Delete Book",
-    Subtitle = "Confirm removal of this title from the library catalog."
+    Title = "Archive Book",
+    Subtitle = "The title stays in the system with its history, but leaves the active catalog.",
+    Actions = @<a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Back to Catalog</a>
 })
-<div class="card p-4 border-danger confirm-danger form-narrow">
-    <h3 class="text-danger">Delete this book?</h3>
-    <p><strong>@Model.Title</strong> by @Model.Author (@Model.ISBN)</p>
-    <form asp-action="Delete" method="post">
+<div class="card p-4 confirm-archive form-narrow">
+    <div class="d-flex gap-3 align-items-start mb-3">
+        <div class="archive-confirm-icon d-inline-flex align-items-center justify-content-center flex-shrink-0" aria-hidden="true"><i class="bi bi-archive fs-4"></i></div>
+        <div>
+            <h3 class="mb-1">Archive this book?</h3>
+            <p class="text-muted small mb-0">Nothing is deleted. You can restore the title at any time from the <strong>Archived</strong> category.</p>
+        </div>
+    </div>
+    <div class="book-archive-summary mb-4">
+        <div class="fw-semibold">@Model.Title</div>
+        <div class="text-muted small">@Model.Author &middot; @Model.ISBN &middot; @Model.Category</div>
+    </div>
+    <form asp-action="Archive" method="post">
+        @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
-        <div class="form-actions"><button class="btn btn-danger">Yes, delete</button> <a class="btn btn-secondary" asp-action="Index">Cancel</a></div>
+        <div class="form-actions">
+            <button class="btn btn-dark"><i class="bi bi-archive me-1"></i>Yes, archive</button>
+            <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+        </div>
     </form>
 </div>
