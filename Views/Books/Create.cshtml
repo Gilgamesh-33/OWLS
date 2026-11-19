@@ -2,13 +2,11 @@
 @{
     ViewData["Title"] = "Add Book";
 }
-<div class="page-header admin-page-header mb-4">
-    <div>
-        <h2 class="mb-1">Add New Book</h2>
-        <p class="text-muted mb-0">Add a new title to the library catalog with complete details and cover image.</p>
-    </div>
-    <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i> Back to Catalog</a>
-</div>
+@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
+    Title = "Add New Book",
+    Subtitle = "Add a new title to the library catalog with complete details and cover image.",
+    Actions = @<a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i> Back to Catalog</a>
+})
 
 <div class="card form-card-pro">
     <div class="card-body p-4 p-lg-5">

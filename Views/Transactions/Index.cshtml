@@ -7,12 +7,11 @@
     int overdue = list.Count(t => t.Status == "Overdue");
     int returned = list.Count(t => t.Status == "Returned");
 }
-<div class="page-header admin-page-header mb-4">
-    <div>
-        <h2 class="mb-0">Borrowing Transactions</h2>
-    </div>
-    <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1"></i> New Checkout</a>
-</div>
+@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
+    Title = "Borrowing Transactions",
+    Subtitle = "Review requests, active loans, and returns.",
+    Actions = @<a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1"></i> New Checkout</a>
+})
 
 <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">

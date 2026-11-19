@@ -3,12 +3,11 @@
     ViewData["Title"] = "Borrow Books";
     var books = Model.Books ?? new List<Book>();
 }
-<div class="page-header admin-page-header borrow-page-header mb-4">
-    <div>
-        <h2 class="mb-0">Borrow Books</h2>
-    </div>
-    <span class="catalog-count-badge"><i class="bi bi-collection me-1"></i>@books.Count book@(books.Count == 1 ? "" : "s") shown</span>
-</div>
+@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
+    Title = "Borrow Books",
+    Subtitle = "Find a book, check its availability, and send a borrow request.",
+    Actions = @<span class="catalog-count-badge"><i class="bi bi-collection me-1"></i>@books.Count book@(books.Count == 1 ? "" : "s") shown</span>
+})
 
 <div class="row g-3 mb-4 borrow-stats">
     <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-hourglass-split"></i> Pending Requests</div><div class="stat-tile-value">@Model.PendingRequests.Count</div></div></div></div>

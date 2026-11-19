@@ -22,20 +22,19 @@
 <link rel="stylesheet" href="~/css/catalog.css" asp-append-version="true" />
 
 <!-- ============ HEADER ============ -->
-<section class="cat-hero no-print">
-    <div class="cat-hero-text">
-        <span class="cat-eyebrow"><i class="bi bi-book-half me-1"></i>OWLS Library</span>
-        <h1 class="cat-title">@(admin ? "Book Catalog" : "Browse Catalog")</h1>
-        <p class="cat-subtitle">
-            @(admin ? "Manage your collection, check books out and keep stock up to date."
-                    : "Find a book, check if it is available, and send a borrow request in one click.")
-        </p>
-    </div>
-    @if (admin)
+@{
+    Func<object, IHtmlContent> catalogActions = null;
+    if (admin)
     {
-        <a class="btn btn-primary cat-add-btn" asp-action="Create"><i class="bi bi-plus-lg me-1"></i> Add Book</a>
+        catalogActions = @<a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1"></i> Add Book</a>;
     }
-</section>
+}
+@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
+    Title = admin ? "Book Catalog" : "Browse Catalog",
+    Subtitle = admin ? "Manage your collection, check books out and keep stock up to date."
+                     : "Find a book, check if it is available, and send a borrow request in one click.",
+    Actions = catalogActions
+})
 
 @if (admin)
 {
@@ -107,11 +106,10 @@
         }
     </nav>
 
-    <!-- Results line + active filters -->
-    <div class="cat-results">
-        <span class="cat-count"><strong>@books.Count</strong> book@(books.Count == 1 ? "" : "s") @(hasFilters ? "found" : "in the catalog")</span>
-        @if (hasFilters)
-        {
+    <!-- Active filters only (the book-count text was intentionally removed) -->
+    @if (hasFilters)
+    {
+        <div class="cat-results">
             <div class="cat-active">
                 @if (!string.IsNullOrWhiteSpace(search))
                 {
@@ -127,8 +125,8 @@
                 }
                 <a class="cat-clear" asp-action="Index">Clear all</a>
             </div>
-        }
-    </div>
+        </div>
+    }
 </section>
 
 <!-- ============ BOOKS ============ -->

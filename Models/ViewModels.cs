@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Html;
 
 namespace OWLS.Models
 {
@@ -33,6 +34,14 @@ namespace OWLS.Models
         public int TotalTitles { get; set; }
         public int TotalBorrowers { get; set; }
         public int TotalTransactions { get; set; }
+    }
+
+    // Shared page heading used by every signed-in admin/borrower page.
+    public class PageHeaderViewModel
+    {
+        public string Title { get; set; } = "";
+        public string Subtitle { get; set; } = "";
+        public Func<object, IHtmlContent> Actions { get; set; }
     }
 
     public class TopBook { public string Title { get; set; } public int Count { get; set; } }

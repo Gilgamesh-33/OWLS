@@ -2,7 +2,10 @@
 @{
     ViewData["Title"] = "Edit Transaction";
 }
-<div class="page-header"><h2>Edit Transaction #@Model.Id</h2></div>
+@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
+    Title = $"Edit Transaction #{Model.Id}",
+    Subtitle = "Update the due date for this loan."
+})
 <div class="card p-4 form-narrow-sm">
     <p><strong>@Model.Book.Title</strong><br />Borrower: @Model.User.FullName</p>
     <form asp-action="Edit" asp-route-id="@Model.Id" method="post">

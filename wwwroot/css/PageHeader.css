@@ -1,0 +1,47 @@
+/* =====================================================================
+   OWLS - PageHeader.css
+   Uniform heading and subheading for signed-in pages.
+   All classes are pg- prefixed so other pages are not affected.
+   ===================================================================== */
+.pg-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+
+.pg-heading { min-width: 0; }
+.pg-heading-text { min-width: 0; }
+
+.pg-title {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -.02em;
+    color: var(--lb-dark);
+}
+
+[data-bs-theme="dark"] .pg-title { color: #e8f2e7; }
+
+.pg-subtitle {
+    margin: .25rem 0 0;
+    font-size: .85rem;
+    line-height: 1.35;
+    color: #6c7a6c;
+}
+
+[data-bs-theme="dark"] .pg-subtitle { color: #9db39c; }
+
+.pg-actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+
+@media (max-width: 575.98px) {
+    .pg-title { font-size: 1.2rem; }
+    .pg-actions { width: 100%; }
+}
+
+@media print {
+    .pg-header { display: none !important; }
+}

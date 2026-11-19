@@ -7,13 +7,11 @@
     var history = ViewBag.History as List<BorrowTransaction> ?? new();
     int pending = (int)(ViewBag.Pending ?? 0);
 }
-<div class="page-header admin-page-header mb-4">
-    <div>
-        <h2 class="mb-1">@(isAdmin ? "User" : "Borrower") Details</h2>
-        <p class="text-muted mb-0">Borrowing records and account information for @Model.FullName.</p>
-    </div>
-    <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Back to Users</a>
-</div>
+@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
+    Title = (isAdmin ? "User" : "Borrower") + " Details",
+    Subtitle = "Borrowing records and account information for " + Model.FullName + ".",
+    Actions = @<a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Back to Users</a>
+})
 
 <div class="row g-3 mb-4">
     <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5 class="mb-3">Account Information</h5><dl class="row mb-0 detail-list"><dt class="col-5">Full Name</dt><dd class="col-7">@Model.FullName</dd><dt class="col-5">ID Number</dt><dd class="col-7">@(string.IsNullOrWhiteSpace(Model.IdNumber)?"—":Model.IdNumber)</dd><dt class="col-5">Email</dt><dd class="col-7">@Model.Email</dd><dt class="col-5">Role</dt><dd class="col-7">@(isAdmin?"Admin":"Borrower")</dd></dl></div></div></div>
