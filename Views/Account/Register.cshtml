@@ -30,10 +30,10 @@
                             <span asp-validation-for="FullName" class="text-danger small"></span>
                         </div>
                         <div class="col-12">
-                            <label asp-for="IdNumber" class="form-label">ID number <span class="text-muted fw-normal">(optional)</span></label>
+                            <label asp-for="IdNumber" class="form-label">School ID</label>
                             <div class="input-group auth-input-group">
                                 <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
-                                <input asp-for="IdNumber" class="form-control" placeholder="School ID" />
+                                <input asp-for="IdNumber" class="form-control" placeholder="School ID" required />
                             </div>
                             <span asp-validation-for="IdNumber" class="text-danger small"></span>
                         </div>
@@ -45,11 +45,15 @@
                             </div>
                             <span asp-validation-for="Email" class="text-danger small"></span>
                         </div>
+
                         <div class="col-12 col-sm-6">
                             <label asp-for="Password" class="form-label">Password</label>
                             <div class="input-group auth-input-group">
                                 <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                                <input asp-for="Password" class="form-control" type="password" placeholder="At least 6 characters" autocomplete="new-password" />
+                                <input asp-for="Password" class="form-control" type="password" placeholder="At least 6 characters" autocomplete="new-password" id="regPassword" />
+                                <button type="button" class="btn btn-outline-secondary toggle-password" data-target="regPassword" aria-label="Show password">
+                                    <i class="bi bi-eye"></i>
+                                </button>
                             </div>
                             <span asp-validation-for="Password" class="text-danger small"></span>
                         </div>
@@ -57,9 +61,33 @@
                             <label asp-for="ConfirmPassword" class="form-label">Confirm password</label>
                             <div class="input-group auth-input-group">
                                 <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
-                                <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="Re-enter password" autocomplete="new-password" />
+                                <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="Re-enter password" autocomplete="new-password" id="regConfirmPassword" />
+                                <button type="button" class="btn btn-outline-secondary toggle-password" data-target="regConfirmPassword" aria-label="Show password">
+                                    <i class="bi bi-eye"></i>
+                                </button>
                             </div>
                             <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                            <span id="matchHint" class="small d-block mt-1 ms-1"></span>
+                        </div>
+
+                        <!-- Real-time password strength -->
+                        <div class="col-12">
+                            <div class="pw-strength" id="pwStrength" aria-live="polite">
+                                <div class="pw-strength-head">
+                                    <span class="pw-strength-title">Password strength</span>
+                                    <span class="pw-strength-label" id="pwStrengthLabel">Start typing…</span>
+                                </div>
+                                <div class="pw-strength-track" role="progressbar" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0" id="pwStrengthTrack">
+                                    <div class="pw-strength-fill" id="pwStrengthFill"></div>
+                                </div>
+                                <ul class="pw-rules" id="pwRules">
+                                    <li data-rule="length"><i class="bi bi-circle"></i> At least 6 characters</li>
+                                    <li data-rule="lower"><i class="bi bi-circle"></i> A lowercase letter</li>
+                                    <li data-rule="digit"><i class="bi bi-circle"></i> A number</li>
+                                    <li data-rule="upper"><i class="bi bi-circle"></i> An uppercase letter <span class="text-muted">(stronger)</span></li>
+                                    <li data-rule="symbol"><i class="bi bi-circle"></i> A symbol like ! @@ # $ <span class="text-muted">(stronger)</span></li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
 
@@ -74,3 +102,93 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            // ---------- Show / hide password (eye icon) ----------
+            document.querySelectorAll('.toggle-password').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var input = document.getElementById(this.dataset.target);
+                    if (!input) return;
+                    var show = input.type === 'password';
+                    input.type = show ? 'text' : 'password';
+                    this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                    this.innerHTML = show ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+                });
+            });
+
+            // ---------- Real-time password strength ----------
+            var pw      = document.getElementById('regPassword');
+            var confirm = document.getElementById('regConfirmPassword');
+            var fill    = document.getElementById('pwStrengthFill');
+            var label   = document.getElementById('pwStrengthLabel');
+            var track   = document.getElementById('pwStrengthTrack');
+            var rules   = document.querySelectorAll('#pwRules li');
+            var hint    = document.getElementById('matchHint');
+            if (!pw) return;
+
+            var levels = [
+                { text: 'Start typing…', cls: '',          pct: 0   },
+                { text: 'Weak',          cls: 'is-weak',   pct: 25  },
+                { text: 'Fair',          cls: 'is-fair',   pct: 50  },
+                { text: 'Good',          cls: 'is-good',   pct: 75  },
+                { text: 'Strong',        cls: 'is-strong', pct: 100 }
+            ];
+
+            function check(v) {
+                return {
+                    length: v.length >= 6,
+                    lower:  /[a-z]/.test(v),
+                    digit:  /\d/.test(v),
+                    upper:  /[A-Z]/.test(v),
+                    symbol: /[^A-Za-z0-9]/.test(v)
+                };
+            }
+
+            function score(v, r) {
+                if (!v) return 0;
+                // The three rules the server enforces must all pass, otherwise it stays "Weak".
+                var required = r.length && r.lower && r.digit;
+                if (!required) return 1;
+                var s = 2;                                   // meets minimum  -> Fair
+                if (v.length >= 10) s++;                     // long           -> +1
+                if (r.upper && r.symbol) s++;                // upper + symbol -> +1
+                else if (v.length >= 12) s++;
+                return Math.min(s, 4);
+            }
+
+            function updateMatch() {
+                if (!confirm || !hint) return;
+                if (!confirm.value) { hint.textContent = ''; hint.className = 'small d-block mt-1 ms-1'; return; }
+                var ok = confirm.value === pw.value;
+                hint.textContent = ok ? 'Passwords match' : 'Passwords do not match yet';
+                hint.className = 'small d-block mt-1 ms-1 ' + (ok ? 'text-success' : 'text-danger');
+            }
+
+            function update() {
+                var v = pw.value;
+                var r = check(v);
+                var lvl = score(v, r);
+                var info = levels[lvl];
+
+                fill.className = 'pw-strength-fill ' + info.cls;
+                fill.style.width = info.pct + '%';
+                label.textContent = info.text;
+                label.className = 'pw-strength-label ' + info.cls;
+                track.setAttribute('aria-valuenow', lvl);
+
+                rules.forEach(function (li) {
+                    var ok = r[li.dataset.rule];
+                    li.classList.toggle('ok', !!ok);
+                    li.querySelector('i').className = ok ? 'bi bi-check-circle-fill' : 'bi bi-circle';
+                });
+                updateMatch();
+            }
+
+            pw.addEventListener('input', update);
+            if (confirm) confirm.addEventListener('input', updateMatch);
+            update();
+        })();
+    </script>
+}

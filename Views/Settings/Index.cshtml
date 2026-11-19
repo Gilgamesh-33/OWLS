@@ -1,0 +1,169 @@
+﻿@model SettingsViewModel
+@{
+    ViewData["Title"] = "Settings";
+}
+
+<div class="page-header admin-page-header mb-4">
+    <div>
+        <h2 class="mb-0">Settings</h2>
+        <p class="text-muted mb-0">Manage how OWLS looks and review your account and system details.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- APPEARANCE -->
+    <div class="col-12 col-lg-7">
+        <div class="card form-card-pro h-100">
+            <div class="card-body p-4">
+                <div class="form-section-header">
+                    <span class="form-section-icon"><i class="bi bi-palette"></i></span>
+                    <div>
+                        <h5 class="mb-0">Appearance</h5>
+                        <div class="small text-muted">Choose a theme. It is saved on this device and browser.</div>
+                    </div>
+                </div>
+
+                <div class="theme-options" role="radiogroup" aria-label="Theme">
+                    <button type="button" class="theme-option" data-theme-choice="light" role="radio" aria-checked="false">
+                        <span class="theme-option-icon"><i class="bi bi-sun"></i></span>
+                        <span class="theme-option-name">Light</span>
+                        <span class="theme-option-desc">Bright and clean</span>
+                    </button>
+                    <button type="button" class="theme-option" data-theme-choice="dark" role="radio" aria-checked="false">
+                        <span class="theme-option-icon"><i class="bi bi-moon-stars"></i></span>
+                        <span class="theme-option-name">Dark</span>
+                        <span class="theme-option-desc">Easier on the eyes</span>
+                    </button>
+                    <button type="button" class="theme-option" data-theme-choice="system" role="radio" aria-checked="false">
+                        <span class="theme-option-icon"><i class="bi bi-circle-half"></i></span>
+                        <span class="theme-option-name">System</span>
+                        <span class="theme-option-desc">Match my device</span>
+                    </button>
+                </div>
+
+                <div class="form-check form-switch mt-4 d-flex align-items-center gap-2 ps-0">
+                    <input class="form-check-input ms-0 mt-0" type="checkbox" role="switch" id="darkSwitch" />
+                    <label class="form-check-label fw-semibold" for="darkSwitch">Dark mode</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACCOUNT -->
+    <div class="col-12 col-lg-5">
+        <div class="card form-card-pro h-100">
+            <div class="card-body p-4">
+                <div class="form-section-header">
+                    <span class="form-section-icon"><i class="bi bi-person-circle"></i></span>
+                    <div>
+                        <h5 class="mb-0">Account</h5>
+                        <div class="small text-muted">Your signed-in details.</div>
+                    </div>
+                </div>
+                <dl class="settings-list mb-0">
+                    <dt>Name</dt>
+                    <dd>@Model.FullName</dd>
+                    <dt>Email</dt>
+                    <dd>@Model.Email</dd>
+                    <dt>School ID</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.IdNumber) ? "—" : Model.IdNumber)</dd>
+                    <dt>Role</dt>
+                    <dd><span class="catalog-category">@Model.Role</span></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- SYSTEM -->
+    <div class="col-12">
+        <div class="card form-card-pro">
+            <div class="card-body p-4">
+                <div class="form-section-header">
+                    <span class="form-section-icon"><i class="bi bi-sliders"></i></span>
+                    <div>
+                        <h5 class="mb-0">System</h5>
+                        <div class="small text-muted">Library rules currently applied by OWLS.</div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <div class="settings-tile">
+                            <div class="settings-tile-label">Default loan period</div>
+                            <div class="settings-tile-value">@Model.LoanDays days</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="settings-tile">
+                            <div class="settings-tile-label">Overdue penalty</div>
+                            <div class="settings-tile-value">₱@Model.PenaltyPerDay.ToString("N2") / day</div>
+                        </div>
+                    </div>
+                    @if (Model.IsAdmin)
+                    {
+                        <div class="col-6 col-md-2">
+                            <div class="settings-tile">
+                                <div class="settings-tile-label">Book titles</div>
+                                <div class="settings-tile-value">@Model.TotalTitles</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="settings-tile">
+                                <div class="settings-tile-label">Borrowers</div>
+                                <div class="settings-tile-value">@Model.TotalBorrowers</div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <div class="settings-tile">
+                                <div class="settings-tile-label">Transactions</div>
+                                <div class="settings-tile-value">@Model.TotalTransactions</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <hr class="my-4" />
+                <div class="small text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    OWLS &middot; Online Web Library System for Dasmariñas Integrated High School.
+                    Loan period and penalty are set in <code>LibrarySettings</code> (<code>Models/BorrowTransaction.cs</code>).
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var buttons = document.querySelectorAll('[data-theme-choice]');
+            var sw = document.getElementById('darkSwitch');
+
+            function isDarkNow() { return document.documentElement.getAttribute('data-bs-theme') === 'dark'; }
+
+            function refresh() {
+                var current = window.OWLS_THEME.get();
+                buttons.forEach(function (b) {
+                    var on = b.dataset.themeChoice === current;
+                    b.classList.toggle('active', on);
+                    b.setAttribute('aria-checked', on ? 'true' : 'false');
+                });
+                if (sw) sw.checked = isDarkNow();
+            }
+
+            buttons.forEach(function (b) {
+                b.addEventListener('click', function () {
+                    window.OWLS_THEME.set(this.dataset.themeChoice);
+                    refresh();
+                });
+            });
+
+            if (sw) sw.addEventListener('change', function () {
+                window.OWLS_THEME.set(sw.checked ? 'dark' : 'light');
+                refresh();
+            });
+
+            refresh();
+        })();
+    </script>
+}

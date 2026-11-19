@@ -12,12 +12,27 @@ namespace OWLS.Models
     public class RegisterViewModel
     {
         [Required, Display(Name = "Full Name")] public string FullName { get; set; }
-        [Display(Name = "ID Number (LRN / Employee No.)")] public string IdNumber { get; set; }
+        [Required(ErrorMessage = "School ID is required."), StringLength(30), Display(Name = "School ID")]
+        public string IdNumber { get; set; }
         [Required, EmailAddress] public string Email { get; set; }
         [Required, DataType(DataType.Password)] public string Password { get; set; }
         [DataType(DataType.Password), Display(Name = "Confirm Password")]
         [Compare("Password", ErrorMessage = "Passwords do not match.")]
         public string ConfirmPassword { get; set; }
+    }
+
+    public class SettingsViewModel
+    {
+        public string FullName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string IdNumber { get; set; } = "";
+        public string Role { get; set; } = "";
+        public bool IsAdmin { get; set; }
+        public int LoanDays { get; set; }
+        public decimal PenaltyPerDay { get; set; }
+        public int TotalTitles { get; set; }
+        public int TotalBorrowers { get; set; }
+        public int TotalTransactions { get; set; }
     }
 
     public class TopBook { public string Title { get; set; } public int Count { get; set; } }
