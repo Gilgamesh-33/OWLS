@@ -4,155 +4,279 @@
     bool admin = User.IsInRole("Admin");
     var books = Model.ToList();
     var categories = ViewBag.Categories as List<string> ?? new List<string>();
+
+    string search = ViewBag.Search as string;
+    string cat = ViewBag.Category as string;
+    string sort = ViewBag.Sort as string;
+    bool avail = (bool)(ViewBag.AvailableOnly ?? false);
+    bool hasFilters = !string.IsNullOrWhiteSpace(search) || !string.IsNullOrWhiteSpace(cat) || avail;
+
+    var pendingIds = ViewBag.MyPendingBookIds as List<int> ?? new List<int>();
+    var borrowedIds = ViewBag.MyBorrowedBookIds as List<int> ?? new List<int>();
+
+    int totalCopies = books.Sum(b => b.TotalCopies);
+    int availCopies = books.Sum(b => b.AvailableCopies);
+    int outOfStock = books.Count(b => b.AvailableCopies < 1);
 }
-<div class="page-header admin-page-header mb-4">
-    <div>
-        <h2 class="mb-0">@(admin ? "Book Catalog" : "Browse Catalog")</h2>
+
+<link rel="stylesheet" href="~/css/catalog.css" asp-append-version="true" />
+
+<!-- ============ HEADER ============ -->
+<section class="cat-hero no-print">
+    <div class="cat-hero-text">
+        <span class="cat-eyebrow"><i class="bi bi-book-half me-1"></i>OWLS Library</span>
+        <h1 class="cat-title">@(admin ? "Book Catalog" : "Browse Catalog")</h1>
+        <p class="cat-subtitle">
+            @(admin ? "Manage your collection, check books out and keep stock up to date."
+                    : "Find a book, check if it is available, and send a borrow request in one click.")
+        </p>
     </div>
     @if (admin)
     {
-        <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1"></i> Add Book</a>
+        <a class="btn btn-primary cat-add-btn" asp-action="Create"><i class="bi bi-plus-lg me-1"></i> Add Book</a>
     }
-    else
-    {
-        <span class="catalog-count-badge"><i class="bi bi-collection me-1"></i>@books.Count book@(books.Count == 1 ? "" : "s") shown</span>
-    }
-</div>
+</section>
 
-<div class="card filter-card mb-4 no-print">
-    <div class="card-body">
-        <form method="get" class="row g-3 align-items-end">
-            <div class="col-lg-3">
-                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Search</label>
-                <div class="search-field">
-                    <i class="bi bi-search search-icon"></i>
-                    <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Title, author, ISBN, category..." aria-label="Search books" />
-                </div>
+@if (admin)
+{
+    <section class="cat-stats no-print" aria-label="Catalog summary">
+        <div class="cat-stat">
+            <span class="cat-stat-icon"><i class="bi bi-collection"></i></span>
+            <div><div class="cat-stat-value">@books.Count</div><div class="cat-stat-label">Titles</div></div>
+        </div>
+        <div class="cat-stat">
+            <span class="cat-stat-icon"><i class="bi bi-stack"></i></span>
+            <div><div class="cat-stat-value">@totalCopies</div><div class="cat-stat-label">Total copies</div></div>
+        </div>
+        <div class="cat-stat">
+            <span class="cat-stat-icon ok"><i class="bi bi-check2-circle"></i></span>
+            <div><div class="cat-stat-value">@availCopies</div><div class="cat-stat-label">Available now</div></div>
+        </div>
+        <div class="cat-stat">
+            <span class="cat-stat-icon @(outOfStock > 0 ? "bad" : "")"><i class="bi bi-exclamation-circle"></i></span>
+            <div><div class="cat-stat-value">@outOfStock</div><div class="cat-stat-label">Out of stock</div></div>
+        </div>
+    </section>
+}
+
+<!-- ============ TOOLBAR ============ -->
+<section class="cat-toolbar no-print">
+    <form method="get" asp-action="Index" id="catForm" class="cat-toolbar-row">
+        <input type="hidden" name="category" value="@cat" />
+
+        <div class="cat-search">
+            <i class="bi bi-search"></i>
+            <input type="search" name="search" value="@search" placeholder="Search title, author, ISBN or category…" aria-label="Search books" autocomplete="off" />
+            @if (!string.IsNullOrWhiteSpace(search))
+            {
+                <a class="cat-search-clear" asp-action="Index" asp-route-category="@cat" asp-route-sort="@sort" asp-route-availableOnly="@(avail ? "true" : null)" aria-label="Clear search"><i class="bi bi-x-lg"></i></a>
+            }
+        </div>
+
+        <div class="cat-control">
+            <label for="catSort" class="visually-hidden">Sort by</label>
+            <i class="bi bi-sort-down"></i>
+            <select id="catSort" name="sort" class="cat-select" data-autosubmit>
+                <option value="" selected="@(string.IsNullOrEmpty(sort))">Title A–Z</option>
+                <option value="title_desc" selected="@(sort == "title_desc")">Title Z–A</option>
+                <option value="author" selected="@(sort == "author")">Author</option>
+                <option value="year" selected="@(sort == "year")">Newest first</option>
+            </select>
+        </div>
+
+        <label class="cat-switch" for="av">
+            <input type="checkbox" id="av" name="availableOnly" value="true" checked="@avail" data-autosubmit />
+            <span class="cat-switch-track"><span class="cat-switch-thumb"></span></span>
+            <span class="cat-switch-text">Available only</span>
+        </label>
+
+        <div class="cat-view-toggle" role="group" aria-label="Layout">
+            <button type="button" data-view="grid" title="Grid view" aria-label="Grid view"><i class="bi bi-grid-3x3-gap"></i></button>
+            <button type="button" data-view="list" title="List view" aria-label="List view"><i class="bi bi-list-ul"></i></button>
+        </div>
+
+        <button type="submit" class="visually-hidden">Search</button>
+    </form>
+
+    <!-- Category chips -->
+    <nav class="cat-chips" aria-label="Categories">
+        <a class="cat-chip @(string.IsNullOrWhiteSpace(cat) ? "active" : "")" asp-action="Index" asp-route-search="@search" asp-route-sort="@sort" asp-route-availableOnly="@(avail ? "true" : null)">All</a>
+        @foreach (var c in categories)
+        {
+            <a class="cat-chip @(c == cat ? "active" : "")" asp-action="Index" asp-route-category="@c" asp-route-search="@search" asp-route-sort="@sort" asp-route-availableOnly="@(avail ? "true" : null)">@c</a>
+        }
+    </nav>
+
+    <!-- Results line + active filters -->
+    <div class="cat-results">
+        <span class="cat-count"><strong>@books.Count</strong> book@(books.Count == 1 ? "" : "s") @(hasFilters ? "found" : "in the catalog")</span>
+        @if (hasFilters)
+        {
+            <div class="cat-active">
+                @if (!string.IsNullOrWhiteSpace(search))
+                {
+                    <a class="cat-tag" asp-action="Index" asp-route-category="@cat" asp-route-sort="@sort" asp-route-availableOnly="@(avail ? "true" : null)" title="Remove">“@search” <i class="bi bi-x"></i></a>
+                }
+                @if (!string.IsNullOrWhiteSpace(cat))
+                {
+                    <a class="cat-tag" asp-action="Index" asp-route-search="@search" asp-route-sort="@sort" asp-route-availableOnly="@(avail ? "true" : null)" title="Remove">@cat <i class="bi bi-x"></i></a>
+                }
+                @if (avail)
+                {
+                    <a class="cat-tag" asp-action="Index" asp-route-search="@search" asp-route-category="@cat" asp-route-sort="@sort" title="Remove">Available only <i class="bi bi-x"></i></a>
+                }
+                <a class="cat-clear" asp-action="Index">Clear all</a>
             </div>
-            <div class="col-sm-6 col-lg-3">
-                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Category</label>
-                <select name="category" class="form-select">
-                    <option value="">All categories</option>
-                    @foreach (var c in categories)
-                    {
-                        <option value="@c" selected="@(c == (string)ViewBag.Category)">@c</option>
-                    }
-                </select>
-            </div>
-            <div class="col-sm-6 col-lg-2">
-                <label class="form-label small fw-semibold text-uppercase text-dark mb-1">Sort</label>
-                <select name="sort" class="form-select">
-                    <option value="" selected="@(string.IsNullOrEmpty((string)ViewBag.Sort))">Title A-Z</option>
-                    <option value="title_desc" selected="@((string)ViewBag.Sort == "title_desc")">Title Z-A</option>
-                    <option value="author" selected="@((string)ViewBag.Sort == "author")">Author</option>
-                    <option value="year" selected="@((string)ViewBag.Sort == "year")">Newest</option>
-                </select>
-            </div>
-            <div class="col-sm-6 col-lg-2">
-                <label class="form-label small fw-semibold text-uppercase text-muted mb-1 filter-check-label">Availability</label>
-                <div class="form-check filter-check mb-0">
-                    <input type="checkbox" class="form-check-input" id="av" name="availableOnly" value="true" checked="@((bool)(ViewBag.AvailableOnly ?? false))" />
-                    <label class="form-check-label fw-semibold mb-0" for="av">Available only</label>
-                </div>
-            </div>
-            <div class="col-sm-6 col-lg-2 d-flex gap-2 align-items-end">
-                <button class="btn btn-dark flex-fill filter-action-btn"><i class="bi bi-funnel me-1"></i> Apply</button>
-                <a asp-action="Index" class="btn btn-outline-secondary filter-action-btn" title="Clear filters" aria-label="Clear filters"><i class="bi bi-x-lg"></i></a>
-            </div>
-        </form>
+        }
     </div>
-</div>
+</section>
 
+<!-- ============ BOOKS ============ -->
 @if (books.Any())
 {
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4 catalog-grid">
+    <div class="cat-grid" id="catGrid">
         @foreach (var b in books)
         {
-            <div class="col">
-                <div class="card h-100 book-card catalog-card">
-                    <a asp-action="Details" asp-route-id="@b.Id" class="book-cover-link position-relative d-block">
-                        @if (!string.IsNullOrEmpty(b.CoverImagePath))
+            bool out_ = b.AvailableCopies < 1;
+            int pct = b.TotalCopies > 0 ? (int)Math.Round(100.0 * b.AvailableCopies / b.TotalCopies) : 0;
+            string level = out_ ? "out" : (b.AvailableCopies == 1 || pct <= 34 ? "low" : "ok");
+            bool isPending = pendingIds.Contains(b.Id);
+            bool isBorrowed = borrowedIds.Contains(b.Id);
+
+            <article class="cat-card @(out_ ? "is-out" : "")">
+                <a asp-action="Details" asp-route-id="@b.Id" class="cat-cover" aria-label="View details for @b.Title">
+                    @if (!string.IsNullOrEmpty(b.CoverImagePath))
+                    {
+                        <img src="@b.CoverImagePath" class="book-cover" alt="Cover of @b.Title" loading="lazy" />
+                    }
+                    else
+                    {
+                        <div class="book-cover book-cover-empty"><i class="bi bi-book"></i></div>
+                    }
+
+                    @if (out_)
+                    {
+                        <span class="cat-flag cat-flag-out">Out of stock</span>
+                    }
+                    else if (!admin && isBorrowed)
+                    {
+                        <span class="cat-flag cat-flag-info">Borrowed by you</span>
+                    }
+                    else if (!admin && isPending)
+                    {
+                        <span class="cat-flag cat-flag-warn">Request pending</span>
+                    }
+
+                    <span class="cat-cover-hover"><i class="bi bi-eye me-1"></i>View details</span>
+                </a>
+
+                <div class="cat-body">
+                    <span class="cat-category">@b.Category</span>
+                    <a asp-action="Details" asp-route-id="@b.Id" class="cat-book-title" title="@b.Title">@b.Title</a>
+                    <div class="cat-author"><i class="bi bi-person"></i>@b.Author<span class="cat-dot">·</span>@b.YearPublished</div>
+
+                    <div class="cat-stock @level">
+                        <div class="cat-stock-bar" role="img" aria-label="@b.AvailableCopies of @b.TotalCopies copies available"><span style="width:@(pct)%"></span></div>
+                        <div class="cat-stock-text">
+                            @if (out_)
+                            {
+                                <span>All copies borrowed</span>
+                            }
+                            else if (level == "low")
+                            {
+
+                                <span>Only @b.AvailableCopies left</span>
+                            }
+                            else
+                            {
+
+                                <span>@b.AvailableCopies of @b.TotalCopies available</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                @if (admin)
+                {
+                    <div class="cat-actions no-print">
+                        <a class="btn btn-primary btn-sm cat-primary-action @(out_ ? "disabled" : "")" asp-controller="Transactions" asp-action="Create" asp-route-bookId="@b.Id" aria-disabled="@(out_ ? "true" : null)" tabindex="@(out_ ? "-1" : null)"><i class="bi bi-journal-plus me-1"></i>Checkout</a>
+                        <a class="cat-icon-btn" asp-action="Edit" asp-route-id="@b.Id" title="Edit" aria-label="Edit @b.Title"><i class="bi bi-pencil"></i></a>
+                        <a class="cat-icon-btn danger" asp-action="Delete" asp-route-id="@b.Id" title="Delete" aria-label="Delete @b.Title"><i class="bi bi-trash"></i></a>
+                    </div>
+                }
+                else if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="cat-actions no-print">
+                        @if (isPending)
                         {
-                            <img src="@b.CoverImagePath" class="book-cover" alt="@b.Title" />
+                            <button class="btn btn-warning btn-sm cat-primary-action" disabled><i class="bi bi-hourglass-split me-1"></i>Request Pending</button>
+                        }
+                        else if (isBorrowed)
+                        {
+                            <button class="btn btn-secondary btn-sm cat-primary-action" disabled><i class="bi bi-journal-check me-1"></i>Currently Borrowed</button>
+                        }
+                        else if (out_)
+                        {
+                            <button class="btn btn-outline-secondary btn-sm cat-primary-action" disabled><i class="bi bi-slash-circle me-1"></i>Unavailable</button>
                         }
                         else
                         {
-                            <div class="book-cover book-cover-empty"><i class="bi bi-book"></i></div>
+                            <form asp-controller="Transactions" asp-action="RequestBorrow" asp-route-bookId="@b.Id" method="post" class="m-0 cat-primary-action borrow-request-form" data-book-title="@b.Title">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="returnTo" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+                                <button class="btn btn-primary btn-sm w-100"><i class="bi bi-bookmark-plus me-1"></i>Request to Borrow</button>
+                            </form>
                         }
-                        <div class="catalog-cover-badge">
-                            @if (b.AvailableCopies > 0)
-                            {
-                                <span class="badge bg-success">@b.AvailableCopies available</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-danger">Unavailable</span>
-                            }
-                        </div>
-                    </a>
-                    <div class="card-body d-flex flex-column">
-                        <div class="mb-1"><span class="catalog-category">@b.Category</span></div>
-                        <a asp-action="Details" asp-route-id="@b.Id" class="book-title text-decoration-none mb-1">@b.Title</a>
-                        <div class="small text-muted mb-2"><i class="bi bi-person me-1"></i>@b.Author</div>
-                        <div class="mt-auto pt-2 d-flex justify-content-between align-items-center small text-muted catalog-meta">
-                            <span><i class="bi bi-calendar3 me-1"></i>@b.YearPublished</span>
-                            <span>@b.AvailableCopies/@b.TotalCopies copies</span>
-                        </div>
                     </div>
-                    @if (admin)
-                    {
-                        <div class="card-footer no-print bg-transparent border-top-0 pt-0 px-3 pb-3">
-                            <div class="d-grid gap-2">
-                                <a class="btn btn-sm btn-success @(b.AvailableCopies < 1 ? "disabled" : "")" asp-controller="Transactions" asp-action="Create" asp-route-bookId="@b.Id"><i class="bi bi-journal-plus me-1"></i>Checkout</a>
-                                <div class="d-flex gap-2">
-                                    <a class="btn btn-sm btn-outline-primary flex-fill" asp-action="Edit" asp-route-id="@b.Id"><i class="bi bi-pencil"></i> Edit</a>
-                                    <form asp-action="Delete" asp-route-id="@b.Id" method="post" class="flex-fill m-0 delete-confirm-form" data-confirm-label="book" data-confirm-name="@b.Title">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100"><i class="bi bi-trash"></i> Delete</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                    else if (User.Identity?.IsAuthenticated == true)
-                    {
-                        var pendingIds = ViewBag.MyPendingBookIds as List<int> ?? new List<int>();
-                        var borrowedIds = ViewBag.MyBorrowedBookIds as List<int> ?? new List<int>();
-                        bool isPending = pendingIds.Contains(b.Id);
-                        bool isBorrowed = borrowedIds.Contains(b.Id);
-                        <div class="card-footer no-print bg-transparent border-top-0 pt-0 px-3 pb-3">
-                            @if (isPending)
-                            {
-                                <button class="btn btn-warning text-dark w-100" disabled><i class="bi bi-hourglass-split me-1"></i>Request Pending</button>
-                            }
-                            else if (isBorrowed)
-                            {
-                                <button class="btn btn-secondary w-100" disabled><i class="bi bi-journal-check me-1"></i>Currently Borrowed</button>
-                            }
-                            else
-                            {
-                                <form asp-controller="Transactions" asp-action="RequestBorrow" asp-route-bookId="@b.Id" method="post" class="m-0 borrow-request-form" data-book-title="@b.Title">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="returnTo" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
-                                    <button class="btn btn-primary w-100" @(b.AvailableCopies < 1 ? "disabled" : null)><i class="bi bi-bookmark-plus me-1"></i>Request to Borrow</button>
-                                </form>
-                            }
-                        </div>
-                    }
-                </div>
-            </div>
+                }
+                else
+                {
+                    <div class="cat-actions no-print">
+                        <a class="btn btn-outline-primary btn-sm cat-primary-action" asp-action="Details" asp-route-id="@b.Id">View details</a>
+                    </div>
+                }
+            </article>
         }
     </div>
 }
 else
 {
-    <div class="card">
-        <div class="card-body text-center py-5">
-            <div class="empty-state-icon mb-2"><i class="bi bi-journal-x"></i></div>
-            <div class="fw-semibold mb-1">No books found</div>
-            <div class="text-muted small">Try adjusting your search, category, or filter options.</div>
-            <a asp-action="Index" class="btn btn-outline-primary btn-sm mt-3">Clear filters</a>
-        </div>
+    <div class="cat-empty">
+        <div class="cat-empty-icon"><i class="bi bi-journal-x"></i></div>
+        <h3>No books found</h3>
+        <p>@(hasFilters ? "Nothing matches your current search or filters. Try different keywords or clear the filters." : "The catalog is empty right now.")</p>
+        @if (hasFilters)
+        {
+            <a asp-action="Index" class="btn btn-primary btn-sm">Clear all filters</a>
+        }
+        else if (admin)
+        {
+            <a asp-action="Create" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add the first book</a>
+        }
     </div>
 }
 
+@section Scripts {
+    <script>
+        (function () {
+            // Auto-apply sort + availability (no Apply button needed)
+            document.querySelectorAll('[data-autosubmit]').forEach(function (el) {
+                el.addEventListener('change', function () { document.getElementById('catForm').submit(); });
+            });
+
+            // Grid / list layout toggle, remembered on this device
+            var KEY = 'owls-catalog-view';
+            var grid = document.getElementById('catGrid');
+            var btns = document.querySelectorAll('.cat-view-toggle button');
+            function setView(v) {
+                if (grid) grid.classList.toggle('is-list', v === 'list');
+                btns.forEach(function (b) { b.classList.toggle('active', b.dataset.view === v); });
+                try { localStorage.setItem(KEY, v); } catch (e) { }
+            }
+            var saved = 'grid';
+            try { saved = localStorage.getItem(KEY) || 'grid'; } catch (e) { }
+            setView(saved);
+            btns.forEach(function (b) { b.addEventListener('click', function () { setView(b.dataset.view); }); });
+        })();
+    </script>
+}
