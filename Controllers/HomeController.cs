@@ -14,8 +14,8 @@ namespace OWLS.Controllers
             if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Books");
 
-            ViewBag.Titles = await _db.Books.CountAsync();
-            ViewBag.Available = await _db.Books.SumAsync(b => (int?)b.AvailableCopies) ?? 0;
+            ViewBag.Titles = await _db.Books.CountAsync(b => !b.IsArchived);
+            ViewBag.Available = await _db.Books.Where(b => !b.IsArchived).SumAsync(b => (int?)b.AvailableCopies) ?? 0;
             ViewBag.Active = await _db.Transactions.CountAsync(t => t.ReturnDate == null);
             return View();
         }

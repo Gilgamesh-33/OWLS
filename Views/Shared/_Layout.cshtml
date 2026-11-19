@@ -68,7 +68,7 @@
                             <li><a asp-controller="Books" asp-action="Index" class="@Active("Books")">Catalog</a></li>
                             @if (User.IsInRole("Borrower"))
                             {
-                                <li><a asp-controller="Transactions" asp-action="Borrow" class="@Active("Transactions")">Borrow Books</a></li>
+                                <li><a asp-controller="Transactions" asp-action="Borrow" class="@Active("Transactions")">Your Library</a></li>
                             }
                             @if (!User.Identity.IsAuthenticated)
                             {
@@ -164,7 +164,7 @@
                         <div class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px;background:var(--lb-chip);color:var(--lb-dark);"><i class="bi bi-journal-text fs-5"></i></div>
                         <div>
                             <div class="fw-semibold mb-1" id="borrowConfirmBookTitle">Request to borrow this book?</div>
-                            <div class="text-muted small">Your request will be submitted as <strong>Pending</strong> for librarian approval. You can track its status in Borrow Books.</div>
+                            <div class="text-muted small">Your request will be submitted as <strong>Pending</strong> for librarian approval. You can track its status in Your Library.</div>
                         </div>
                     </div>
                 </div>
@@ -308,6 +308,60 @@
                 }
 
                 modalEl.addEventListener('hidden.bs.modal', function () { pendingForm = null; });
+            })();
+    </script>
+    <script>
+            // Live search: re-run the enclosing GET form shortly after the user stops typing.
+            // Focus and caret are restored after the reload so the user can keep typing.
+            (function () {
+                var DELAY = 350;
+                var FOCUS_KEY = 'owls-live-search-focus';
+                var CARET_KEY = 'owls-live-search-caret';
+                var timer = null;
+
+                function rememberCaret(input) {
+                    try {
+                        sessionStorage.setItem(FOCUS_KEY, input.name || 'search');
+                        sessionStorage.setItem(CARET_KEY, String(input.selectionStart == null ? input.value.length : input.selectionStart));
+                    } catch (e) { }
+                }
+
+                document.addEventListener('input', function (e) {
+                    var input = e.target;
+                    if (!input || !input.matches || !input.matches('[data-live-search]')) return;
+                    var form = input.closest('form');
+                    if (!form || !form.getAttribute('method') || form.getAttribute('method').toLowerCase() !== 'get') return;
+                    clearTimeout(timer);
+                    timer = setTimeout(function () {
+                        timer = null;
+                        rememberCaret(input);
+                        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                        else form.submit();
+                    }, DELAY);
+                });
+
+                // A manual submit (Enter key / button) cancels any pending debounced submit.
+                document.addEventListener('submit', function (e) {
+                    if (e.target && e.target.querySelector && e.target.querySelector('[data-live-search]')) clearTimeout(timer);
+                }, true);
+
+                function restoreFocus() {
+                    var name = null;
+                    try { name = sessionStorage.getItem(FOCUS_KEY); } catch (e) { return; }
+                    if (!name) return;
+                    try { sessionStorage.removeItem(FOCUS_KEY); } catch (e) { }
+                    var input = document.querySelector('[data-live-search][name="' + name + '"]');
+                    if (!input) return;
+                    input.focus();
+                    var caret = -1;
+                    try { caret = parseInt(sessionStorage.getItem(CARET_KEY), 10); sessionStorage.removeItem(CARET_KEY); } catch (e) { }
+                    if (!isNaN(caret) && caret >= 0 && typeof input.setSelectionRange === 'function' && input.type !== 'number') {
+                        try { input.setSelectionRange(caret, caret); } catch (e) { }
+                    }
+                }
+
+                if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', restoreFocus);
+                else restoreFocus();
             })();
     </script>
     @await RenderSectionAsync("Scripts", required: false)

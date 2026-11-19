@@ -1,55 +1,162 @@
-@model ApplicationUser
+@model BorrowerDetailsViewModel
 @{
-    ViewData["Title"] = "Borrower Details";
-    bool isAdmin = (bool)(ViewBag.IsAdmin ?? false);
-    var active = ViewBag.Active as List<BorrowTransaction> ?? new();
-    var overdue = ViewBag.Overdue as List<BorrowTransaction> ?? new();
-    var history = ViewBag.History as List<BorrowTransaction> ?? new();
-    int pending = (int)(ViewBag.Pending ?? 0);
+    ViewData["Title"] = (Model.IsAdmin ? "User" : "Borrower") + " Details";
+    var user = Model.User;
+    var initials = string.IsNullOrWhiteSpace(user.FullName)
+        ? "U"
+        : string.Concat(user.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(s => char.ToUpperInvariant(s[0])));
 }
 @await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
-    Title = (isAdmin ? "User" : "Borrower") + " Details",
-    Subtitle = "Borrowing records and account information for " + Model.FullName + ".",
+    Title = (Model.IsAdmin ? "User" : "Borrower") + " Details",
+    Subtitle = "Account details and borrowing activity for " + user.FullName + ".",
     Actions = @<a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Back to Users</a>
 })
 
+<!-- ===== PROFILE ===== -->
+<section class="card borrower-profile mb-4">
+    <div class="card-body p-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-auto">
+                <div class="borrower-avatar" aria-hidden="true">@initials</div>
+            </div>
+            <div class="col">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                    <h4 class="mb-0">@user.FullName</h4>
+                    <span class="badge @(Model.IsAdmin ? "text-bg-primary" : "text-bg-secondary")">@(Model.IsAdmin ? "Admin" : "Borrower")</span>
+                </div>
+                <div class="borrower-contact">
+                    <span><i class="bi bi-envelope me-1"></i>@user.Email</span>
+                    <span><i class="bi bi-person-badge me-1"></i>@(string.IsNullOrWhiteSpace(user.IdNumber) ? "No ID number" : user.IdNumber)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== STATS ===== -->
 <div class="row g-3 mb-4">
-    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5 class="mb-3">Account Information</h5><dl class="row mb-0 detail-list"><dt class="col-5">Full Name</dt><dd class="col-7">@Model.FullName</dd><dt class="col-5">ID Number</dt><dd class="col-7">@(string.IsNullOrWhiteSpace(Model.IdNumber)?"—":Model.IdNumber)</dd><dt class="col-5">Email</dt><dd class="col-7">@Model.Email</dd><dt class="col-5">Role</dt><dd class="col-7">@(isAdmin?"Admin":"Borrower")</dd></dl></div></div></div>
-    <div class="col-md-8">
-        <div class="row g-3">
-            <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-hourglass-split"></i> Pending</div><div class="stat-tile-value">@pending</div></div></div></div>
-            <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-journal-check"></i> Active</div><div class="stat-tile-value">@active.Count</div></div></div></div>
-            <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-exclamation-triangle"></i> Overdue</div><div class="stat-tile-value text-danger">@overdue.Count</div></div></div></div>
-            <div class="col-6 col-lg-3"><div class="card stat-tile h-100"><div class="card-body"><div class="stat-tile-label"><i class="bi bi-clock-history"></i> History</div><div class="stat-tile-value">@history.Count</div></div></div></div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-tile h-100"><div class="card-body">
+            <div class="stat-tile-label"><i class="bi bi-hourglass-split"></i> Pending</div>
+            <div class="stat-tile-value">@Model.PendingCount</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-tile h-100"><div class="card-body">
+            <div class="stat-tile-label"><i class="bi bi-journal-check"></i> Active</div>
+            <div class="stat-tile-value">@Model.ActiveCount</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-tile h-100"><div class="card-body">
+            <div class="stat-tile-label"><i class="bi bi-exclamation-triangle"></i> Overdue</div>
+            <div class="stat-tile-value text-danger">@Model.OverdueCount</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-tile h-100"><div class="card-body">
+            <div class="stat-tile-label"><i class="bi bi-collection"></i> Total Records</div>
+            <div class="stat-tile-value">@Model.TotalRecords</div>
+        </div></div>
+    </div>
+</div>
+
+<!-- ===== CURRENT ACTIVITY ===== -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-xl-6">
+        <div class="card table-card h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <h5 class="mb-1"><i class="bi bi-journal-check me-2"></i>Currently Borrowed</h5>
+                    <span class="badge status-badge status-borrowed">@Model.ActiveCount</span>
+                </div>
+                <small class="text-muted">Approved loans still within their due date</small>
+                <div class="table-responsive mt-3">
+                    <table class="table table-hover align-middle mb-0 pro-table">
+                        <thead><tr><th class="ps-3">Book</th><th>Borrowed</th><th>Due Date</th><th class="pe-3">Status</th></tr></thead>
+                        <tbody>
+                            @foreach (var t in Model.ActiveLoans)
+                            {
+                                <tr>
+                                    <td class="ps-3"><div class="fw-semibold">@t.Book?.Title</div><small class="text-muted">@t.Book?.Author</small></td>
+                                    <td>@t.BorrowDate.ToString("MMM dd, yyyy")</td>
+                                    <td class="fw-semibold">@t.DueDate.ToString("MMM dd, yyyy")</td>
+                                    <td class="pe-3"><span class="badge status-badge status-borrowed">Borrowed</span></td>
+                                </tr>
+                            }
+                            @if (!Model.ActiveLoans.Any())
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-4">No active borrowed books.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-xl-6">
+        <div class="card table-card h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <h5 class="mb-1"><i class="bi bi-exclamation-circle me-2"></i>Needs Attention</h5>
+                    <span class="badge status-badge status-pending">@Model.Attention.Count</span>
+                </div>
+                <small class="text-muted">Pending approvals and overdue loans</small>
+                <div class="table-responsive mt-3">
+                    <table class="table table-hover align-middle mb-0 pro-table">
+                        <thead><tr><th class="ps-3">Book</th><th>Detail</th><th>Penalty</th><th class="pe-3">Status</th></tr></thead>
+                        <tbody>
+                            @foreach (var t in Model.Attention)
+                            {
+                                bool isOverdue = t.Status == "Overdue";
+                                <tr class="@(isOverdue ? "table-danger" : "")">
+                                    <td class="ps-3"><div class="fw-semibold">@t.Book?.Title</div><small class="text-muted">@t.Book?.Author</small></td>
+                                    <td>@(isOverdue ? "Due " + t.DueDate.ToString("MMM dd, yyyy") : "Awaiting approval")</td>
+                                    <td>@(t.CurrentPenalty > 0 ? "₱" + t.CurrentPenalty.ToString("N2") : "-")</td>
+                                    <td class="pe-3"><span class="badge status-badge @(isOverdue ? "status-overdue" : "status-pending")">@t.Status</span></td>
+                                </tr>
+                            }
+                            @if (!Model.Attention.Any())
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-4">Nothing needs attention.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4 mb-4">
-    <div class="col-12 col-lg-6">
-        <div class="card table-card h-100"><div class="card-body p-4"><h5 class="mb-1">Currently Borrowed Books</h5><small class="text-muted">Active approved loans</small>
-            <div class="table-responsive mt-3"><table class="table table-hover align-middle mb-0 pro-table"><thead><tr><th class="ps-3">Book</th><th>Due Date</th><th class="pe-3">Status</th></tr></thead><tbody>
-            @foreach (var t in active.OrderBy(x=>x.DueDate)) { <tr><td class="ps-3">@t.Book?.Title</td><td class="@(t.Status=="Overdue"?"text-danger fw-semibold":"")">@t.DueDate.ToString("MMM dd, yyyy")</td><td class="pe-3"><span class="badge status-badge @(t.Status=="Overdue"?"status-overdue":"status-borrowed")">@t.Status</span></td></tr> }
-            @if (!active.Any()) { <tr><td colspan="3" class="text-center text-muted py-4">No active borrowed books.</td></tr> }
-            </tbody></table></div>
-        </div></div>
-    </div>
-    <div class="col-12 col-lg-6">
-        <div class="card table-card h-100"><div class="card-body p-4"><h5 class="mb-1">Pending Requests &amp; Overdue</h5><small class="text-muted">Items needing attention</small>
-            <div class="table-responsive mt-3"><table class="table table-hover align-middle mb-0 pro-table"><thead><tr><th class="ps-3">Book</th><th>Due/Info</th><th>Penalty</th><th class="pe-3">Status</th></tr></thead><tbody>
-            @foreach (var t in history.Where(t=>t.RequestStatus=="Pending" || t.Status=="Overdue").OrderByDescending(t=>t.Status=="Overdue").ThenByDescending(t=>t.Id)) { <tr><td class="ps-3">@t.Book?.Title</td><td>@(t.RequestStatus=="Pending"?"Awaiting approval":t.DueDate.ToString("MMM dd, yyyy"))</td><td>@(t.CurrentPenalty>0?"₱"+t.CurrentPenalty.ToString("N2"):"-")</td><td class="pe-3"><span class="badge status-badge @(t.Status=="Overdue"?"status-overdue":t.Status=="Pending"?"status-pending":"status-borrowed")">@t.Status</span></td></tr> }
-            @if (!history.Any(t=>t.RequestStatus=="Pending" || t.Status=="Overdue")) { <tr><td colspan="4" class="text-center text-muted py-4">No pending or overdue items.</td></tr> }
-            </tbody></table></div>
-        </div></div>
-    </div>
-</div>
-
+<!-- ===== PAST BORROWINGS ===== -->
 <div class="card table-card">
     <div class="card-body p-4">
-        <h5 class="mb-1">Borrowing History</h5><small class="text-muted">All requests and transactions for this borrower</small>
-        <div class="table-responsive mt-3"><table class="table table-hover align-middle mb-0 pro-table"><thead><tr><th class="ps-3">Book</th><th>Borrowed</th><th>Due Date</th><th>Returned</th><th>Penalty</th><th class="pe-3">Status</th></tr></thead><tbody>
-        @foreach (var t in history) { <tr><td class="ps-3">@t.Book?.Title</td><td>@(t.RequestStatus=="Pending"?"-":t.BorrowDate.ToString("MMM dd, yyyy"))</td><td>@(t.RequestStatus=="Pending"||t.RequestStatus=="Declined"?"-":t.DueDate.ToString("MMM dd, yyyy"))</td><td>@(t.ReturnDate?.ToString("MMM dd, yyyy")??"-")</td><td>@(t.CurrentPenalty>0?"₱"+t.CurrentPenalty.ToString("N2"):"-")</td><td class="pe-3"><span class="badge status-badge @(t.Status=="Returned"?"status-returned":t.Status=="Overdue"?"status-overdue":t.Status=="Pending"?"status-pending":t.Status=="Declined"?"status-declined":"status-borrowed")">@t.Status</span></td></tr> }
-        @if (!history.Any()) { <tr><td colspan="6" class="text-center text-muted py-4">No borrowing records.</td></tr> }
-        </tbody></table></div>
+        <div class="d-flex align-items-center justify-content-between gap-2">
+            <h5 class="mb-1"><i class="bi bi-clock-history me-2"></i>Past Borrowings</h5>
+            <span class="badge status-badge status-returned">@Model.PastTransactions.Count</span>
+        </div>
+        <small class="text-muted">Returned and declined requests — active items are shown above</small>
+        <div class="table-responsive mt-3">
+            <table class="table table-hover align-middle mb-0 pro-table">
+                <thead><tr><th class="ps-3">Book</th><th>Borrowed</th><th>Due Date</th><th>Returned</th><th>Penalty</th><th class="pe-3">Status</th></tr></thead>
+                <tbody>
+                    @foreach (var t in Model.PastTransactions)
+                    {
+                        <tr>
+                            <td class="ps-3"><div class="fw-semibold">@t.Book?.Title</div><small class="text-muted">@t.Book?.Author</small></td>
+                            <td>@(t.RequestStatus == "Pending" ? "-" : t.BorrowDate.ToString("MMM dd, yyyy"))</td>
+                            <td>@(t.RequestStatus == "Declined" ? "-" : t.DueDate.ToString("MMM dd, yyyy"))</td>
+                            <td>@(t.ReturnDate?.ToString("MMM dd, yyyy") ?? "-")</td>
+                            <td>@(t.Penalty > 0 ? "₱" + t.Penalty.ToString("N2") : "-")</td>
+                            <td class="pe-3"><span class="badge status-badge @(t.Status == "Returned" ? "status-returned" : "status-declined")">@t.Status</span></td>
+                        </tr>
+                    }
+                    @if (!Model.PastTransactions.Any())
+                    {
+                        <tr><td colspan="6" class="text-center text-muted py-4">No completed borrowings yet.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>

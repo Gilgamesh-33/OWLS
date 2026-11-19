@@ -2,6 +2,8 @@
 @{
     ViewData["Title"] = "Catalog";
     bool admin = User.IsInRole("Admin");
+    bool archivedView = ViewBag.ArchivedView is bool av && av;
+    int archivedCount = ViewBag.ArchivedCount is int ac ? ac : 0;
     var books = Model.ToList();
     var categories = ViewBag.Categories as List<string> ?? new List<string>();
 
@@ -9,7 +11,7 @@
     string cat = ViewBag.Category as string;
     string sort = ViewBag.Sort as string;
     bool avail = (bool)(ViewBag.AvailableOnly ?? false);
-    bool hasFilters = !string.IsNullOrWhiteSpace(search) || !string.IsNullOrWhiteSpace(cat) || avail;
+    bool hasFilters = !string.IsNullOrWhiteSpace(search) || !string.IsNullOrWhiteSpace(cat) || avail || archivedView;
 
     var pendingIds = ViewBag.MyPendingBookIds as List<int> ?? new List<int>();
     var borrowedIds = ViewBag.MyBorrowedBookIds as List<int> ?? new List<int>();
@@ -30,8 +32,9 @@
     }
 }
 @await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
-    Title = admin ? "Book Catalog" : "Browse Catalog",
-    Subtitle = admin ? "Manage your collection, check books out and keep stock up to date."
+    Title = archivedView ? "Archived Books" : admin ? "Book Catalog" : "Browse Catalog",
+    Subtitle = archivedView ? "Titles kept for their history. Restore one to return it to the catalog."
+             : admin ? "Manage your collection, check books out and keep stock up to date."
                      : "Find a book, check if it is available, and send a borrow request in one click.",
     Actions = catalogActions
 })
@@ -65,7 +68,7 @@
 
         <div class="cat-search">
             <i class="bi bi-search"></i>
-            <input type="search" name="search" value="@search" placeholder="Search title, author, ISBN or category…" aria-label="Search books" autocomplete="off" />
+            <input type="search" name="search" value="@search" placeholder="Search title, author, ISBN or category…" aria-label="Search books" autocomplete="off" data-live-search />
             @if (!string.IsNullOrWhiteSpace(search))
             {
                 <a class="cat-search-clear" asp-action="Index" asp-route-category="@cat" asp-route-sort="@sort" asp-route-availableOnly="@(avail ? "true" : null)" aria-label="Clear search"><i class="bi bi-x-lg"></i></a>
@@ -102,7 +105,14 @@
         <a class="cat-chip @(string.IsNullOrWhiteSpace(cat) ? "active" : "")" asp-action="Index" asp-route-search="@search" asp-route-sort="@sort" asp-route-availableOnly="@(avail ? "true" : null)">All</a>
         @foreach (var c in categories)
         {
-            <a class="cat-chip @(c == cat ? "active" : "")" asp-action="Index" asp-route-category="@c" asp-route-search="@search" asp-route-sort="@sort" asp-route-availableOnly="@(avail ? "true" : null)">@c</a>
+            bool isArchiveChip = c == "Archived";
+            <a class="cat-chip @(c == cat ? "active" : "") @(isArchiveChip ? "archived-chip" : "")" asp-action="Index" asp-route-category="@c" asp-route-search="@search" asp-route-sort="@sort" asp-route-availableOnly="@(avail ? "true" : null)">
+                @if (isArchiveChip)
+                {
+                    <i class="bi bi-archive me-1"></i>
+                }
+                @c@(isArchiveChip && archivedCount > 0 ? " (" + archivedCount + ")" : "")
+            </a>
         }
     </nav>
 
@@ -152,7 +162,11 @@
                         <div class="book-cover book-cover-empty"><i class="bi bi-book"></i></div>
                     }
 
-                    @if (out_)
+                    @if (b.IsArchived)
+                    {
+                        <span class="cat-flag cat-flag-archived"><i class="bi bi-archive me-1"></i>Archived</span>
+                    }
+                    else if (out_)
                     {
                         <span class="cat-flag cat-flag-out">Out of stock</span>
                     }
@@ -197,9 +211,20 @@
                 @if (admin)
                 {
                     <div class="cat-actions no-print">
-                        <a class="btn btn-primary btn-sm cat-primary-action @(out_ ? "disabled" : "")" asp-controller="Transactions" asp-action="Create" asp-route-bookId="@b.Id" aria-disabled="@(out_ ? "true" : null)" tabindex="@(out_ ? "-1" : null)"><i class="bi bi-journal-plus me-1"></i>Checkout</a>
-                        <a class="cat-icon-btn" asp-action="Edit" asp-route-id="@b.Id" title="Edit" aria-label="Edit @b.Title"><i class="bi bi-pencil"></i></a>
-                        <a class="cat-icon-btn danger" asp-action="Delete" asp-route-id="@b.Id" title="Delete" aria-label="Delete @b.Title"><i class="bi bi-trash"></i></a>
+                        @if (archivedView)
+                        {
+                            <form asp-action="Restore" asp-route-id="@b.Id" method="post" class="m-0 cat-primary-action">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-primary btn-sm w-100"><i class="bi bi-arrow-counterclockwise me-1"></i>Restore</button>
+                            </form>
+                            <a class="cat-icon-btn" asp-action="Details" asp-route-id="@b.Id" title="View details" aria-label="View details for @b.Title"><i class="bi bi-eye"></i></a>
+                        }
+                        else
+                        {
+                            <a class="btn btn-primary btn-sm cat-primary-action @(out_ ? "disabled" : "")" asp-controller="Transactions" asp-action="Create" asp-route-bookId="@b.Id" aria-disabled="@(out_ ? "true" : null)" tabindex="@(out_ ? "-1" : null)"><i class="bi bi-journal-plus me-1"></i>Checkout</a>
+                            <a class="cat-icon-btn" asp-action="Edit" asp-route-id="@b.Id" title="Edit" aria-label="Edit @b.Title"><i class="bi bi-pencil"></i></a>
+                            <a class="cat-icon-btn danger" asp-action="Archive" asp-route-id="@b.Id" title="Archive" aria-label="Archive @b.Title"><i class="bi bi-archive"></i></a>
+                        }
                     </div>
                 }
                 else if (User.Identity?.IsAuthenticated == true)
@@ -242,7 +267,7 @@ else
     <div class="cat-empty">
         <div class="cat-empty-icon"><i class="bi bi-journal-x"></i></div>
         <h3>No books found</h3>
-        <p>@(hasFilters ? "Nothing matches your current search or filters. Try different keywords or clear the filters." : "The catalog is empty right now.")</p>
+        <p>@(archivedView ? "No archived titles right now." : hasFilters ? "Nothing matches your current search or filters. Try different keywords or clear the filters." : "The catalog is empty right now.")</p>
         @if (hasFilters)
         {
             <a asp-action="Index" class="btn btn-primary btn-sm">Clear all filters</a>

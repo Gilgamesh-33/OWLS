@@ -42,7 +42,7 @@ namespace OWLS.Controllers
         {
             if (User.IsInRole("Admin")) return RedirectToAction(nameof(Index));
             var uid = _users.GetUserId(User);
-            var q = _db.Books.AsQueryable();
+            var q = _db.Books.Where(b => !b.IsArchived).AsQueryable();
             if (!string.IsNullOrWhiteSpace(search))
                 q = q.Where(b => b.Title.Contains(search) || b.Author.Contains(search) || b.ISBN.Contains(search) || b.Category.Contains(search));
             if (!string.IsNullOrWhiteSpace(category)) q = q.Where(b => b.Category == category);
@@ -62,7 +62,7 @@ namespace OWLS.Controllers
             var vm = new BorrowPageViewModel
             {
                 Books = await q.ToListAsync(),
-                Categories = await _db.Books.Select(b => b.Category).Distinct().OrderBy(c => c).ToListAsync(),
+                Categories = await _db.Books.Where(b => !b.IsArchived).Select(b => b.Category).Distinct().OrderBy(c => c).ToListAsync(),
                 Search = search,
                 Category = category,
                 Sort = sort,
@@ -72,7 +72,9 @@ namespace OWLS.Controllers
                 PendingRequests = myTx.Where(t => t.RequestStatus == "Pending").ToList(),
                 ActiveLoans = myTx.Where(t => t.RequestStatus == "Approved" && t.ReturnDate == null && t.Status == "Borrowed").ToList(),
                 OverdueLoans = myTx.Where(t => t.Status == "Overdue").ToList(),
-                History = myTx.OrderByDescending(t => t.BorrowDate).ThenByDescending(t => t.Id).ToList()
+                // Only completed requests belong in history; pending/active/overdue loans are already shown above.
+                History = myTx.Where(t => t.ReturnDate != null || t.RequestStatus == "Declined")
+                    .OrderByDescending(t => t.ReturnDate ?? t.BorrowDate).ThenByDescending(t => t.Id).ToList()
             };
             return View(vm);
         }
@@ -92,6 +94,11 @@ namespace OWLS.Controllers
             var uid = _users.GetUserId(User);
             var book = await _db.Books.FindAsync(bookId);
             if (book == null) return NotFound();
+            if (book.IsArchived)
+            {
+                TempData["Error"] = "This book has been archived and is no longer available for borrowing.";
+                return SafeBorrowRedirect(returnTo);
+            }
             if (book.AvailableCopies < 1)
             {
                 TempData["Error"] = "No copies available for this book.";
@@ -279,7 +286,8 @@ namespace OWLS.Controllers
 
         private async Task LoadDropdowns(int? bookId, string selectedUserId)
         {
-            var books = await _db.Books.Where(b => b.AvailableCopies > 0).OrderBy(b => b.Title).ToListAsync();
+            var books = await _db.Books.Where(b => b.AvailableCopies > 0 && !b.IsArchived).OrderBy(b => b.Title).ToListAsync();
+            var borrowers = (await _users.GetUsersInRoleAsync(DbSeeder.BorrowerRole)).OrderBy(u => u.FullName);
             ViewBag.Books = new SelectList(books.Select(b => new { b.Id, Label = $"{b.Title} ({b.AvailableCopies} avail.)" }), "Id", "Label", bookId);
 
             // Keep the chosen borrower visible when a validation error returns the form.

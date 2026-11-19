@@ -377,6 +377,10 @@
         color: #fff;
     }
 
+    .cat-chip.archived-chip {
+        border-style: dashed;
+    }
+
 [data-bs-theme="dark"] .cat-chip.active {
     background: #3f6b43;
     border-color: #3f6b43;
@@ -537,6 +541,10 @@
 .cat-flag-warn {
     background: #e0a100;
     color: #2b2100;
+}
+
+.cat-flag-archived {
+    background: #6c757d;
 }
 
 .cat-body {

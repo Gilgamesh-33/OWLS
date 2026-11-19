@@ -49,12 +49,27 @@ namespace OWLS.Controllers
                 .OrderByDescending(t => t.Id)
                 .ToListAsync();
 
-            ViewBag.IsAdmin = await _users.IsInRoleAsync(user, DbSeeder.AdminRole);
-            ViewBag.Pending = tx.Count(t => t.RequestStatus == "Pending");
-            ViewBag.Active = tx.Where(t => t.RequestStatus == "Approved" && t.ReturnDate == null).ToList();
-            ViewBag.Overdue = tx.Where(t => t.Status == "Overdue").ToList();
-            ViewBag.History = tx;
-            return View(user);
+            var pending = tx.Where(t => t.RequestStatus == "Pending").ToList();
+            var overdue = tx.Where(t => t.Status == "Overdue").ToList();
+            // "Borrowed" is the computed status for approved, unreturned loans that are not yet overdue.
+            var active = tx.Where(t => t.Status == "Borrowed").ToList();
+            var past = tx.Where(t => t.ReturnDate != null || t.RequestStatus == "Declined")
+                .OrderByDescending(t => t.ReturnDate ?? t.BorrowDate).ThenByDescending(t => t.Id).ToList();
+
+            var vm = new BorrowerDetailsViewModel
+            {
+                User = user,
+                IsAdmin = await _users.IsInRoleAsync(user, DbSeeder.AdminRole),
+                PendingCount = pending.Count,
+                ActiveCount = active.Count,
+                OverdueCount = overdue.Count,
+                TotalRecords = tx.Count,
+                ActiveLoans = active.OrderBy(t => t.DueDate).ToList(),
+                Attention = pending.Concat(overdue)
+                    .OrderByDescending(t => t.Status == "Overdue").ThenByDescending(t => t.Id).ToList(),
+                PastTransactions = past
+            };
+            return View(vm);
         }
 
         [HttpPost, ValidateAntiForgeryToken]

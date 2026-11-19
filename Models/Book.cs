@@ -31,5 +31,9 @@ namespace OWLS.Models
 
         [Display(Name = "Cover Image"), StringLength(200)]
         public string CoverImagePath { get; set; }
+
+        // Archived books stay in the database for their history but are hidden from the active catalog.
+        [Display(Name = "Archived")]
+        public bool IsArchived { get; set; }
     }
 }

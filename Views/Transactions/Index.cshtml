@@ -48,13 +48,14 @@
     </div>
 </div>
 
-<div class="card filter-card mb-4">
+<div class="card filter-card mb-4 tx-filter-card">
     <div class="card-body">
         <form method="get" class="row g-3 align-items-end">
             <div class="col-lg-6">
-                <div class="catalog-style-search">
-                    <i class="bi bi-search"></i>
-                    <input name="search" value="@ViewBag.Search" placeholder="Search book title, borrower, or ID number..." aria-label="Search transactions" />
+                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Search</label>
+                <div class="search-field">
+                    <i class="bi bi-search search-icon"></i>
+                    <input name="search" value="@ViewBag.Search" class="form-control" placeholder="Search book title, borrower, or ID number..." aria-label="Search transactions" data-live-search />
                 </div>
             </div>
             <div class="col-md-6 col-lg-4">
@@ -89,8 +90,8 @@
             {
                 <span class="badge rounded-pill text-bg-warning"><i class="bi bi-bell me-1"></i>@pending pending approval@(pending == 1 ? "" : "s")</span>
             }
-            <a class="btn btn-sm btn-outline-danger" asp-action="Index" asp-route-status="Overdue"><i class="bi bi-exclamation-triangle me-1"></i>Overdue</a>
-            <a class="btn btn-sm btn-outline-primary" asp-action="Index" asp-route-status="Borrowed"><i class="bi bi-journal-check me-1"></i>Unreturned</a>
+            <a class="btn btn-sm btn-outline-danger tx-quick-filter" asp-action="Index" asp-route-status="Overdue"><i class="bi bi-exclamation-triangle me-1"></i>Overdue</a>
+            <a class="btn btn-sm btn-outline-primary tx-quick-filter" asp-action="Index" asp-route-status="Borrowed"><i class="bi bi-journal-check me-1"></i>Unreturned</a>
         </div>
     </div>
     <div class="table-responsive">

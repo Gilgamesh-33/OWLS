@@ -75,6 +75,20 @@ namespace OWLS.Models
         public List<ChartPoint> AvailabilityBreakdown { get; set; } = new();
     }
 
+    // Admin borrower profile: grouped data so the details page can stay readable.
+    public class BorrowerDetailsViewModel
+    {
+        public ApplicationUser User { get; set; }
+        public bool IsAdmin { get; set; }
+        public int PendingCount { get; set; }
+        public int ActiveCount { get; set; }
+        public int OverdueCount { get; set; }
+        public int TotalRecords { get; set; }
+        public List<BorrowTransaction> ActiveLoans { get; set; } = new();
+        public List<BorrowTransaction> Attention { get; set; } = new();
+        public List<BorrowTransaction> PastTransactions { get; set; } = new();
+    }
+
     public class BorrowPageViewModel
     {
         public List<Book> Books { get; set; } = new();
