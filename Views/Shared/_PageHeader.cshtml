@@ -1,0 +1,16 @@
+@model PageHeaderViewModel
+<div class="pg-header no-print">
+    <div class="pg-heading">
+        <div class="pg-heading-text">
+            <h2 class="pg-title">@Model.Title</h2>
+            @if (!string.IsNullOrWhiteSpace(Model.Subtitle))
+            {
+                <p class="pg-subtitle">@Model.Subtitle</p>
+            }
+        </div>
+    </div>
+    @if (Model.Actions != null)
+    {
+        <div class="pg-actions">@Model.Actions(null)</div>
+    }
+</div>

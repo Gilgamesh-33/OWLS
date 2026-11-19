@@ -2,6 +2,10 @@
 @{
     ViewData["Title"] = Model.Title;
 }
+@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
+    Title = "Book Details",
+    Subtitle = "Book information and current availability."
+})
 <div class="card p-4">
     <div class="row g-4">
         <div class="col-md-3">

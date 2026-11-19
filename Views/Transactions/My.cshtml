@@ -2,7 +2,10 @@
 @{
     ViewData["Title"] = "My Borrowings";
 }
-<div class="page-header"><h2>My Borrowing History</h2></div>
+@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
+    Title = "My Borrowing History",
+    Subtitle = "Track your requests, loans, returns, and penalties."
+})
 <div class="card">
     <div class="table-responsive">
         <table class="table align-middle mb-0">

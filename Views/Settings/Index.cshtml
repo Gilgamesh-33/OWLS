@@ -3,12 +3,10 @@
     ViewData["Title"] = "Settings";
 }
 
-<div class="page-header admin-page-header mb-4">
-    <div>
-        <h2 class="mb-0">Settings</h2>
-        <p class="text-muted mb-0">Manage how OWLS looks and review your account and system details.</p>
-    </div>
-</div>
+@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
+    Title = "Settings",
+    Subtitle = "Manage how OWLS looks and review your account and system details."
+})
 
 <div class="row g-4">
     <!-- APPEARANCE -->

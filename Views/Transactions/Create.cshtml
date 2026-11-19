@@ -1,7 +1,10 @@
 @{
     ViewData["Title"] = "New Checkout";
 }
-<div class="page-header"><h2>New Checkout</h2></div>
+@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
+    Title = "New Checkout",
+    Subtitle = "Check out a book to a borrower and set its due date."
+})
 <div class="card p-4 form-narrow">
     <form asp-action="Create" method="post">
         <div asp-validation-summary="All" class="text-danger"></div>
