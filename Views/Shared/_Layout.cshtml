@@ -147,6 +147,30 @@
         </div>
     </div>
 
+    <div class="modal fade lb-delete-modal" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-describedby="deleteConfirmModalDesc" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0" style="background: var(--lb-surface);">
+                    <h5 class="modal-title fw-bold text-danger" id="deleteConfirmModalLabel"><i class="bi bi-exclamation-triangle me-2"></i>Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <div class="d-flex gap-3 align-items-start">
+                        <div class="lb-delete-icon rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0" aria-hidden="true"><i class="bi bi-trash3 fs-5"></i></div>
+                        <div>
+                            <div class="fw-semibold mb-1" id="deleteConfirmTarget">Delete this item?</div>
+                            <div class="text-muted small" id="deleteConfirmModalDesc">This action cannot be undone. Please make sure you want to continue.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" autofocus>Cancel</button>
+                    <button type="button" class="btn btn-danger" id="deleteConfirmSubmitBtn"><i class="bi bi-trash3 me-1"></i>Yes, delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
             // Back/Forward button: never show a stale cached page (e.g. the login page after signing in).
             // Reloading makes the server re-check the session, so signed-in users get redirected home.
@@ -179,6 +203,49 @@
                     pendingForm = form;
                     var bookTitle = form.getAttribute('data-book-title');
                     if (titleEl) titleEl.textContent = bookTitle ? ('Request to borrow "' + bookTitle + '"?') : 'Request to borrow this book?';
+                    modal.show();
+                }, true);
+
+                if (submitBtn) {
+                    submitBtn.addEventListener('click', function () {
+                        if (!pendingForm) return;
+                        var f = pendingForm;
+                        pendingForm = null;
+                        f.dataset.confirmed = 'true';
+                        modal.hide();
+                        if (typeof f.requestSubmit === 'function') f.requestSubmit();
+                        else f.submit();
+                    });
+                }
+
+                modalEl.addEventListener('hidden.bs.modal', function () { pendingForm = null; });
+            })();
+    </script>
+    <script>
+            (function () {
+                var pendingForm = null;
+                var modalEl = document.getElementById('deleteConfirmModal');
+                if (!modalEl || typeof bootstrap === 'undefined') return;
+                var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                var targetEl = document.getElementById('deleteConfirmTarget');
+                var submitBtn = document.getElementById('deleteConfirmSubmitBtn');
+
+                document.addEventListener('submit', function (e) {
+                    var form = e.target;
+                    if (!form || !form.classList || !form.classList.contains('delete-confirm-form')) return;
+                    if (form.dataset.confirmed === 'true') {
+                        form.dataset.confirmed = 'false';
+                        return;
+                    }
+                    e.preventDefault();
+                    pendingForm = form;
+                    var name = form.getAttribute('data-confirm-name');
+                    var label = form.getAttribute('data-confirm-label') || 'item';
+                    if (targetEl) {
+                        targetEl.textContent = name
+                            ? 'Delete ' + label + ' "' + name + '"?'
+                            : 'Delete this ' + label + '?';
+                    }
                     modal.show();
                 }, true);
 

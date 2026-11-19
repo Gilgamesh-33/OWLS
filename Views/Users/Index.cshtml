@@ -95,9 +95,9 @@
                             <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@u.Id"><i class="bi bi-person-lines-fill me-1"></i>Details</a>
                             @if (!isAdmin)
                             {
-                                <form asp-action="Delete" asp-route-id="@u.Id" method="post" class="d-inline" onsubmit="return confirm('Delete this user account?');">
+                                <form asp-action="Delete" asp-route-id="@u.Id" method="post" class="d-inline delete-confirm-form" data-confirm-label="borrower account" data-confirm-name="@u.FullName">
                                     @Html.AntiForgeryToken()
-                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete borrower account for @u.FullName"><i class="bi bi-trash"></i></button>
                                 </form>
                             }
                         </td>
