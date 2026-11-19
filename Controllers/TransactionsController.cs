@@ -129,8 +129,44 @@ namespace OWLS.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(int? bookId)
         {
-            await LoadDropdowns(bookId);
+            await LoadDropdowns(bookId, null);
             return View();
+        }
+
+        // Live borrower lookup for the checkout search box.
+        [HttpGet, Authorize(Roles = "Admin")]
+        public async Task<IActionResult> BorrowerSearch(string q)
+        {
+            q = (q ?? "").Trim();
+            var roleId = await _db.Roles
+                .Where(r => r.Name == DbSeeder.BorrowerRole)
+                .Select(r => r.Id)
+                .FirstOrDefaultAsync();
+
+            var query = _db.Users.Where(u =>
+                _db.UserRoles.Any(ur => ur.RoleId == roleId && ur.UserId == u.Id));
+
+            if (q.Length > 0)
+            {
+                query = query.Where(u =>
+                    (u.FullName != null && u.FullName.Contains(q)) ||
+                    (u.IdNumber != null && u.IdNumber.Contains(q)) ||
+                    (u.Email != null && u.Email.Contains(q)));
+            }
+
+            var items = await query
+                .OrderBy(u => u.FullName)
+                .Take(10)
+                .Select(u => new
+                {
+                    id = u.Id,
+                    fullName = u.FullName,
+                    idNumber = u.IdNumber,
+                    email = u.Email
+                })
+                .ToListAsync();
+
+            return Json(new { items });
         }
 
         [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "Admin")]
@@ -141,7 +177,7 @@ namespace OWLS.Controllers
             else if (book.AvailableCopies < 1) ModelState.AddModelError("", "No copies available for this book.");
             if (days < 1 || days > 60) ModelState.AddModelError("", "Loan period must be 1-60 days.");
 
-            if (!ModelState.IsValid) { await LoadDropdowns(bookId); return View(); }
+            if (!ModelState.IsValid) { await LoadDropdowns(bookId, userId); return View(); }
 
             _db.Transactions.Add(new BorrowTransaction
             {
@@ -241,12 +277,20 @@ namespace OWLS.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private async Task LoadDropdowns(int? bookId)
+        private async Task LoadDropdowns(int? bookId, string selectedUserId)
         {
             var books = await _db.Books.Where(b => b.AvailableCopies > 0).OrderBy(b => b.Title).ToListAsync();
-            var borrowers = (await _users.GetUsersInRoleAsync(DbSeeder.BorrowerRole)).OrderBy(u => u.FullName);
             ViewBag.Books = new SelectList(books.Select(b => new { b.Id, Label = $"{b.Title} ({b.AvailableCopies} avail.)" }), "Id", "Label", bookId);
-            ViewBag.Users = new SelectList(borrowers.Select(u => new { u.Id, Label = $"{u.FullName} - {u.IdNumber}" }), "Id", "Label");
+
+            // Keep the chosen borrower visible when a validation error returns the form.
+            var borrower = string.IsNullOrEmpty(selectedUserId)
+                ? null
+                : await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == selectedUserId);
+
+            ViewBag.SelectedBorrowerId = borrower?.Id;
+            ViewBag.BorrowerSearchText = borrower == null
+                ? ""
+                : $"{borrower.FullName} — {borrower.IdNumber}".Trim();
         }
     }
 }
