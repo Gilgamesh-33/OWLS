@@ -11,8 +11,10 @@ namespace OWLS.Controllers
     public class UsersController : Controller
     {
         private readonly UserManager<ApplicationUser> _users;
+        private readonly SignInManager<ApplicationUser> _signIn;
         private readonly ApplicationDbContext _db;
-        public UsersController(UserManager<ApplicationUser> users, ApplicationDbContext db) { _users = users; _db = db; }
+        public UsersController(UserManager<ApplicationUser> users, SignInManager<ApplicationUser> signIn, ApplicationDbContext db)
+        { _users = users; _signIn = signIn; _db = db; }
 
         public async Task<IActionResult> Index(string search)
         {
@@ -70,6 +72,73 @@ namespace OWLS.Controllers
                 PastTransactions = past
             };
             return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return NotFound();
+            var user = await _users.FindByIdAsync(id);
+            if (user == null) return NotFound();
+
+            return View(new EditBorrowerViewModel
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                IdNumber = user.IdNumber,
+                Email = user.Email,
+                IsAdmin = await _users.IsInRoleAsync(user, DbSeeder.AdminRole)
+            });
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(EditBorrowerViewModel m)
+        {
+            var user = await _users.FindByIdAsync(m.Id);
+            if (user == null) return NotFound();
+
+            m.IsAdmin = await _users.IsInRoleAsync(user, DbSeeder.AdminRole);
+
+            // The seeder looks the admin up by email at startup, so the admin email stays locked.
+            if (m.IsAdmin) m.Email = user.Email;
+
+            if (!ModelState.IsValid) return View(m);
+
+            var fullName = m.FullName.Trim();
+            var idNumber = m.IdNumber.Trim();
+            var email = m.Email.Trim();
+
+            if (!string.Equals(user.IdNumber, idNumber, StringComparison.OrdinalIgnoreCase)
+                && await _users.Users.AnyAsync(u => u.Id != user.Id && u.IdNumber == idNumber))
+            {
+                ModelState.AddModelError(nameof(m.IdNumber), "Another account already uses this School ID.");
+                return View(m);
+            }
+
+            var emailChanged = !string.Equals(user.Email, email, StringComparison.OrdinalIgnoreCase);
+
+            user.FullName = fullName;
+            user.IdNumber = idNumber;
+            if (emailChanged)
+            {
+                user.Email = email;
+                user.UserName = email;   // login uses the email as the username
+            }
+
+            var result = await _users.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                foreach (var e in result.Errors) ModelState.AddModelError("", e.Description);
+                return View(m);
+            }
+
+            if (emailChanged) await _users.UpdateSecurityStampAsync(user);
+
+            // If an admin edited their own account, re-issue their cookie so the name in the navbar updates.
+            if (user.Id == _users.GetUserId(User)) await _signIn.RefreshSignInAsync(user);
+
+            TempData["Success"] = "Details updated for " + user.FullName + ".";
+            return RedirectToAction(nameof(Details), new { id = user.Id });
         }
 
         [HttpPost, ValidateAntiForgeryToken]

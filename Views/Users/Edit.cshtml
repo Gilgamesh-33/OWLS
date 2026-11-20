@@ -1,0 +1,61 @@
+﻿@model EditBorrowerViewModel
+@{
+    ViewData["Title"] = "Edit " + (Model.IsAdmin ? "User" : "Borrower");
+}
+@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel
+{
+    Title = "Edit " + (Model.IsAdmin ? "User" : "Borrower") + " Details",
+    Subtitle = "Update the name, School ID, and email for this account.",
+    Actions = @<a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id"><i class="bi bi-arrow-left me-1"></i>Back to Details</a>
+})
+
+<div class="card form-card-pro">
+    <div class="card-body p-4 p-lg-5">
+        <form asp-action="Edit" method="post">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+            <div class="form-section mb-4">
+                <div class="form-section-header">
+                    <div class="form-section-icon"><i class="bi bi-person-vcard"></i></div>
+                    <div>
+                        <h5 class="mb-0">Account Details</h5>
+                        <small class="text-muted">Changes apply immediately after saving.</small>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="FullName" class="form-label fw-semibold"></label>
+                        <input asp-for="FullName" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="IdNumber" class="form-label fw-semibold"></label>
+                        <input asp-for="IdNumber" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="IdNumber" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Email" class="form-label fw-semibold"></label>
+                        @if (Model.IsAdmin)
+                        {
+                            <input asp-for="Email" class="form-control" readonly />
+                            <div class="form-text">The admin email cannot be changed here.</div>
+                        }
+                        else
+                        {
+                            <input asp-for="Email" class="form-control" type="email" autocomplete="off" />
+                            <div class="form-text">This is also the email the borrower signs in with.</div>
+                        }
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+            <div class="d-flex flex-wrap gap-2 justify-content-end">
+                <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
+                <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check-circle me-1"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>

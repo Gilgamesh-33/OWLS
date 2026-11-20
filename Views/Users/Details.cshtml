@@ -6,10 +6,14 @@
         ? "U"
         : string.Concat(user.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(s => char.ToUpperInvariant(s[0])));
 }
-@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
+@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel
+{
     Title = (Model.IsAdmin ? "User" : "Borrower") + " Details",
     Subtitle = "Account details and borrowing activity for " + user.FullName + ".",
-    Actions = @<a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Back to Users</a>
+    Actions = @<div class="d-flex flex-wrap gap-2">
+<a class="btn btn-primary" asp-action="Edit" asp-route-id="@user.Id"><i class="bi bi-pencil-square me-1"></i>Edit Details</a>
+<a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Back to Users</a>
+</div>
 })
 
 <!-- ===== PROFILE ===== -->
@@ -36,28 +40,36 @@
 <!-- ===== STATS ===== -->
 <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
-        <div class="card stat-tile h-100"><div class="card-body">
-            <div class="stat-tile-label"><i class="bi bi-hourglass-split"></i> Pending</div>
-            <div class="stat-tile-value">@Model.PendingCount</div>
-        </div></div>
+        <div class="card stat-tile h-100">
+            <div class="card-body">
+                <div class="stat-tile-label"><i class="bi bi-hourglass-split"></i> Pending</div>
+                <div class="stat-tile-value">@Model.PendingCount</div>
+            </div>
+        </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="card stat-tile h-100"><div class="card-body">
-            <div class="stat-tile-label"><i class="bi bi-journal-check"></i> Active</div>
-            <div class="stat-tile-value">@Model.ActiveCount</div>
-        </div></div>
+        <div class="card stat-tile h-100">
+            <div class="card-body">
+                <div class="stat-tile-label"><i class="bi bi-journal-check"></i> Active</div>
+                <div class="stat-tile-value">@Model.ActiveCount</div>
+            </div>
+        </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="card stat-tile h-100"><div class="card-body">
-            <div class="stat-tile-label"><i class="bi bi-exclamation-triangle"></i> Overdue</div>
-            <div class="stat-tile-value text-danger">@Model.OverdueCount</div>
-        </div></div>
+        <div class="card stat-tile h-100">
+            <div class="card-body">
+                <div class="stat-tile-label"><i class="bi bi-exclamation-triangle"></i> Overdue</div>
+                <div class="stat-tile-value text-danger">@Model.OverdueCount</div>
+            </div>
+        </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="card stat-tile h-100"><div class="card-body">
-            <div class="stat-tile-label"><i class="bi bi-collection"></i> Total Records</div>
-            <div class="stat-tile-value">@Model.TotalRecords</div>
-        </div></div>
+        <div class="card stat-tile h-100">
+            <div class="card-body">
+                <div class="stat-tile-label"><i class="bi bi-collection"></i> Total Records</div>
+                <div class="stat-tile-value">@Model.TotalRecords</div>
+            </div>
+        </div>
     </div>
 </div>
 

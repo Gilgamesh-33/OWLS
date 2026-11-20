@@ -89,6 +89,22 @@ namespace OWLS.Models
         public List<BorrowTransaction> PastTransactions { get; set; } = new();
     }
 
+    // Admin form for editing a user's account details.
+    public class EditBorrowerViewModel
+    {
+        public string Id { get; set; } = "";
+        public bool IsAdmin { get; set; }
+
+        [Required(ErrorMessage = "Full name is required."), StringLength(100), Display(Name = "Full Name")]
+        public string FullName { get; set; } = "";
+
+        [Required(ErrorMessage = "School ID is required."), StringLength(30), Display(Name = "School ID")]
+        public string IdNumber { get; set; } = "";
+
+        [Required(ErrorMessage = "Email is required."), EmailAddress, StringLength(256), Display(Name = "Email")]
+        public string Email { get; set; } = "";
+    }
+
     public class BorrowPageViewModel
     {
         public List<BorrowTransaction> PendingRequests { get; set; } = new();
