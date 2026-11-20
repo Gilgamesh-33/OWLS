@@ -2,7 +2,8 @@
 @{
     ViewData["Title"] = Model.Title;
 }
-@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
+@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel
+{
     Title = "Book Details",
     Subtitle = "Book information and current availability."
 })
@@ -24,7 +25,7 @@
                 else
                 {
 
-                    <div class="book-cover book-cover-empty"><i class="bi bi-book"></i></div>
+                    @await Html.PartialAsync("_BookCover", Model)
                 }
             </div>
         </div>
@@ -69,4 +70,3 @@
         </div>
     </div>
 </div>
-
