@@ -187,7 +187,7 @@
                         <h5 class="rp-card-title">Borrowing Status Breakdown</h5>
                         <p class="rp-card-sub">Pending, approved (active), returned, overdue, declined</p>
                     </div>
-                    <div class="rp-chart rp-chart--sm report-chart-wrap"><canvas id="statusChart" role="img" aria-label="Doughnut chart of borrowing status breakdown, @statusTotal total records"></canvas></div>
+                    <div class="rp-chart rp-chart--sm rp-chart--doughnut report-chart-wrap"><canvas id="statusChart" role="img" aria-label="Doughnut chart of borrowing status breakdown, @statusTotal total records"></canvas></div>
                 </div>
             </div>
         </div>
@@ -276,7 +276,7 @@
                         <h5 class="rp-card-title">Available vs Borrowed Books</h5>
                         <p class="rp-card-sub">Current copy distribution across all titles</p>
                     </div>
-                    <div class="rp-chart rp-chart--md report-chart-wrap"><canvas id="availabilityChart" role="img" aria-label="Doughnut chart of available versus borrowed copies"></canvas></div>
+                    <div class="rp-chart rp-chart--md rp-chart--doughnut report-chart-wrap"><canvas id="availabilityChart" role="img" aria-label="Doughnut chart of available versus borrowed copies"></canvas></div>
                 </div>
             </div>
         </div>
@@ -354,123 +354,160 @@
                 if (el) el.addEventListener('change', markCustom);
             });
 
-            const tone = { primary: '#2d452f', secondary: '#6f8b6d', light: '#cfe2ce', alert: '#b23b48', warning: '#b27a24', neutral: '#9aa69a' };
-            const common = {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                devicePixelRatio: 2,
-                color: '#6c7a6c',
-                font: { family: 'Roboto, system-ui, sans-serif', size: 11 },
-                interaction: { mode: 'index', intersect: false },
-                plugins: {
-                    legend: { display: false, labels: { boxWidth: 9, boxHeight: 9, usePointStyle: true, pointStyle: 'circle', padding: 14, color: '#4c5f4e', font: { size: 11 } } },
-                    tooltip: { backgroundColor: '#263a28', padding: 10, cornerRadius: 8, usePointStyle: true, boxWidth: 8, boxHeight: 8, titleFont: { size: 12, weight: '600' }, bodyFont: { size: 12 } }
-                },
-                scales: {
-                    x: { grid: { display: false }, border: { display: false }, ticks: { color: '#7c8a7d', maxRotation: 45, minRotation: 0, maxTicksLimit: 14 } },
-                    y: { beginAtZero: true, border: { display: false }, grid: { color: 'rgba(45,69,47,.08)', drawTicks: false }, ticks: { color: '#7c8a7d', precision: 0, padding: 8 } }
-                }
-            };
-            const legendTop = { ...common, plugins: { ...common.plugins, legend: { ...common.plugins.legend, display: true, position: 'top' } } };
-            const donut = {
-                ...common,
-                scales: {},
-                cutout: '62%',
-                interaction: { mode: 'nearest', intersect: true },
-                plugins: { ...common.plugins, legend: { ...common.plugins.legend, display: true, position: 'bottom' } }
-            };
-            const bar = function (label, data, color) {
-                return { label: label, data: data, backgroundColor: color, borderRadius: 5, borderSkipped: false, maxBarThickness: 26 };
-            };
+            const charts = [];
 
-            const trendLabels = @Html.Raw(trendLabels), trendValues = @Html.Raw(trendValues);
-            const returnsLabels = @Html.Raw(returnsLabels), returnsValues = @Html.Raw(returnsValues);
-            const topLabels = @Html.Raw(topLabels), topValues = @Html.Raw(topValues);
-            const catLabels = @Html.Raw(catLabels), catTotal = @Html.Raw(catTotal), catAvail = @Html.Raw(catAvail), catBorrowed = @Html.Raw(catBorrowed);
-            const availLabels = @Html.Raw(availLabels), availValues = @Html.Raw(availValues);
-            const statusLabels = @Html.Raw(statusLabels), statusValues = @Html.Raw(statusValues);
-            const statusTotal = @statusTotal;
+            function renderCharts(isDark) {
+                charts.forEach(function (c) { c.destroy(); });
+                charts.length = 0;
 
-            const mk = (id, cfg) => { const el = document.getElementById(id); if (el && typeof Chart !== 'undefined') new Chart(el, cfg); };
-
-            mk('trendChart', {
-                type: 'line',
-                data: { labels: trendLabels, datasets: [{
-                    label: 'Books Borrowed', data: trendValues,
-                    borderColor: tone.primary, backgroundColor: 'rgba(45,69,47,.10)',
-                    borderWidth: 2, fill: true, tension: .35,
-                    pointRadius: 2.5, pointHoverRadius: 5, pointBackgroundColor: tone.primary, pointBorderWidth: 0
-                }] },
-                options: common
-            });
-
-            mk('statusChart', {
-                type: 'doughnut',
-                data: { labels: statusLabels, datasets: [{
-                    label: 'Count', data: statusValues,
-                    backgroundColor: [tone.warning, tone.secondary, tone.primary, tone.alert, tone.neutral], borderWidth: 0, hoverOffset: 4
-                }] },
-                options: { ...donut, cutout: '60%' },
-                plugins: [{
-                    id: 'rpCenterTotal',
-                    beforeDraw: function (chart) {
-                        const area = chart.chartArea;
-                        if (!area) return;
-                        const ctx = chart.ctx;
-                        const styles = getComputedStyle(chart.canvas);
-                        const ink = styles.getPropertyValue('--rp-ink').trim() || '#2d452f';
-                        const muted = styles.getPropertyValue('--rp-muted').trim() || '#6c7a6c';
-                        const x = (area.left + area.right) / 2;
-                        const y = (area.top + area.bottom) / 2;
-                        ctx.save();
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillStyle = ink;
-                        ctx.font = '700 22px Roboto, system-ui, sans-serif';
-                        ctx.fillText(String(statusTotal), x, y - 6);
-                        ctx.fillStyle = muted;
-                        ctx.font = '600 10px Roboto, system-ui, sans-serif';
-                        ctx.fillText('TOTAL RECORDS', x, y + 14);
-                        ctx.restore();
+                const P = isDark
+                    ? {
+                        primary: '#86d69b', secondary: '#7fb2ff', light: '#3a3a44',
+                        alert: '#ff7b88', warning: '#ffb347', neutral: '#8a8a95',
+                        grid: 'rgba(255,255,255,.10)', axis: '#a6a6b0', label: '#d6d6dc',
+                        ink: '#e6e6e9', paper: '#2a2a31'
                     }
-                }]
-            });
+                    : {
+                        primary: '#2d452f', secondary: '#6f8b6d', light: '#cfe2ce',
+                        alert: '#b23b48', warning: '#b27a24', neutral: '#9aa69a',
+                        grid: 'rgba(45,69,47,.08)', axis: '#7c8a7d', label: '#4c5f4e',
+                        ink: '#2d452f', paper: '#263a28'
+                    };
 
-            mk('topBooksChart', {
-                type: 'bar',
-                data: { labels: topLabels, datasets: [bar('Times Borrowed', topValues, tone.primary)] },
-                options: {
-                    ...common,
-                    indexAxis: 'y',
-                    plugins: { ...common.plugins, legend: { display: false } },
+                const common = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    devicePixelRatio: 2,
+                    color: P.axis,
+                    font: { family: 'Roboto, system-ui, sans-serif', size: 11 },
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false, labels: { boxWidth: 9, boxHeight: 9, usePointStyle: true, pointStyle: 'circle', padding: 14, color: P.label, font: { size: 11 } } },
+                        tooltip: { backgroundColor: P.paper, padding: 10, cornerRadius: 8, usePointStyle: true, boxWidth: 8, boxHeight: 8, titleFont: { size: 12, weight: '600' }, bodyFont: { size: 12 } }
+                    },
                     scales: {
-                        x: { beginAtZero: true, border: { display: false }, grid: { color: 'rgba(45,69,47,.08)' }, ticks: { color: '#7c8a7d', precision: 0, padding: 8 } },
-                        y: { grid: { display: false }, border: { display: false }, ticks: { color: '#4c5f4e', autoSkip: false } }
+                        x: { grid: { display: false }, border: { display: false }, ticks: { color: P.axis, maxRotation: 45, minRotation: 0, maxTicksLimit: 14 } },
+                        y: { beginAtZero: true, border: { display: false }, grid: { color: P.grid, drawTicks: false }, ticks: { color: P.axis, precision: 0, padding: 8 } }
                     }
-                }
-            });
+                };
+                const legendTop = { ...common, plugins: { ...common.plugins, legend: { ...common.plugins.legend, display: true, position: 'top' } } };
+                const donut = {
+                    ...common,
+                    scales: {},
+                    cutout: '62%',
+                    interaction: { mode: 'nearest', intersect: true },
+                    plugins: { ...common.plugins, legend: { ...common.plugins.legend, display: true, position: 'bottom' } }
+                };
+                const bar = function (label, data, color) {
+                    return { label: label, data: data, backgroundColor: color, borderRadius: 5, borderSkipped: false, maxBarThickness: 26 };
+                };
 
-            mk('returnsChart', {
-                type: 'bar',
-                data: { labels: returnsLabels, datasets: [bar('Books Returned', returnsValues, tone.secondary)] },
-                options: common
-            });
+                const trendLabels = @Html.Raw(trendLabels), trendValues = @Html.Raw(trendValues);
+                const returnsLabels = @Html.Raw(returnsLabels), returnsValues = @Html.Raw(returnsValues);
+                const topLabels = @Html.Raw(topLabels), topValues = @Html.Raw(topValues);
+                const catLabels = @Html.Raw(catLabels), catTotal = @Html.Raw(catTotal), catAvail = @Html.Raw(catAvail), catBorrowed = @Html.Raw(catBorrowed);
+                const availLabels = @Html.Raw(availLabels), availValues = @Html.Raw(availValues);
+                const statusLabels = @Html.Raw(statusLabels), statusValues = @Html.Raw(statusValues);
+                const statusTotal = @statusTotal;
 
-            mk('inventoryChart', {
-                type: 'bar',
-                data: { labels: catLabels, datasets: [
-                    bar('Total Copies', catTotal, tone.primary),
-                    bar('Available', catAvail, tone.secondary),
-                    bar('Borrowed', catBorrowed, tone.warning)
-                ] },
-                options: legendTop
-            });
+                const mk = (id, cfg) => { const el = document.getElementById(id); if (el && typeof Chart !== 'undefined') charts.push(new Chart(el, cfg)); };
 
-            mk('availabilityChart', {
-                type: 'doughnut',
-                data: { labels: availLabels, datasets: [{ label: 'Copies', data: availValues, backgroundColor: [tone.secondary, tone.warning], borderWidth: 0, hoverOffset: 4 }] },
-                options: donut
+                mk('trendChart', {
+                    type: 'line',
+                    data: { labels: trendLabels, datasets: [{
+                        label: 'Books Borrowed', data: trendValues,
+                        borderColor: P.primary,
+                        backgroundColor: isDark ? 'rgba(134,214,155,.16)' : 'rgba(45,69,47,.10)',
+                        borderWidth: 2, fill: true, tension: .35,
+                        pointRadius: 2.5, pointHoverRadius: 5, pointBackgroundColor: P.primary, pointBorderWidth: 0
+                    }] },
+                    options: common
+                });
+
+                mk('statusChart', {
+                    type: 'doughnut',
+                    data: { labels: statusLabels, datasets: [{
+                        label: 'Count', data: statusValues,
+                        backgroundColor: [P.warning, P.secondary, P.primary, P.alert, P.neutral], borderWidth: 0, hoverOffset: 4
+                    }] },
+                    options: { ...donut, cutout: '60%' },
+                    plugins: [{
+                        id: 'rpCenterTotal',
+                        beforeDraw: function (chart) {
+                            const area = chart.chartArea;
+                            if (!area) return;
+                            const ctx = chart.ctx;
+                            const styles = getComputedStyle(chart.canvas);
+                            const ink = styles.getPropertyValue('--rp-ink').trim() || P.ink;
+                            const muted = styles.getPropertyValue('--rp-muted').trim() || P.axis;
+                            const x = (area.left + area.right) / 2;
+                            const y = (area.top + area.bottom) / 2;
+                            ctx.save();
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillStyle = ink;
+                            ctx.font = '700 22px Roboto, system-ui, sans-serif';
+                            ctx.fillText(String(statusTotal), x, y - 6);
+                            ctx.fillStyle = muted;
+                            ctx.font = '600 10px Roboto, system-ui, sans-serif';
+                            ctx.fillText('TOTAL RECORDS', x, y + 14);
+                            ctx.restore();
+                        }
+                    }]
+                });
+
+                mk('topBooksChart', {
+                    type: 'bar',
+                    data: { labels: topLabels, datasets: [bar('Times Borrowed', topValues, P.primary)] },
+                    options: {
+                        ...common,
+                        indexAxis: 'y',
+                        plugins: { ...common.plugins, legend: { display: false } },
+                        scales: {
+                            x: { beginAtZero: true, border: { display: false }, grid: { color: P.grid }, ticks: { color: P.axis, precision: 0, padding: 8 } },
+                            y: { grid: { display: false }, border: { display: false }, ticks: { color: P.label, autoSkip: false } }
+                        }
+                    }
+                });
+
+                mk('returnsChart', {
+                    type: 'bar',
+                    data: { labels: returnsLabels, datasets: [bar('Books Returned', returnsValues, P.secondary)] },
+                    options: common
+                });
+
+                mk('inventoryChart', {
+                    type: 'bar',
+                    data: { labels: catLabels, datasets: [
+                        bar('Total Copies', catTotal, P.primary),
+                        bar('Available', catAvail, P.secondary),
+                        bar('Borrowed', catBorrowed, P.warning)
+                    ] },
+                    options: legendTop
+                });
+
+                mk('availabilityChart', {
+                    type: 'doughnut',
+                    data: { labels: availLabels, datasets: [{ label: 'Copies', data: availValues, backgroundColor: [P.secondary, P.warning], borderWidth: 0, hoverOffset: 4 }] },
+                    options: donut
+                });
+            }
+
+            renderCharts(document.documentElement.getAttribute('data-bs-theme') === 'dark');
+
+            // Reports print as a light PDF even when the app is in dark mode.
+            let printingFromDark = false;
+            window.addEventListener('beforeprint', function () {
+                printingFromDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+                if (printingFromDark) document.documentElement.setAttribute('data-bs-theme', 'light');
+                renderCharts(false);
+            });
+            window.addEventListener('afterprint', function () {
+                if (!printingFromDark) return;
+                printingFromDark = false;
+                document.documentElement.setAttribute('data-bs-theme', 'dark');
+                renderCharts(true);
             });
         })();
     </script>

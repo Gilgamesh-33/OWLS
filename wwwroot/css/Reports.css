@@ -25,16 +25,23 @@
 }
 
 [data-bs-theme="dark"] {
-    --rp-card: #1b261d;
-    --rp-soft: #223024;
-    --rp-border: rgba(191, 224, 188, .12);
-    --rp-ink: #e8f2e7;
-    --rp-muted: #9db39c;
-    --rp-accent-2: #8fb18d;
-    --rp-accent-soft: #253728;
-    --rp-red-soft: #3a2427;
-    --rp-amber-soft: #3a3122;
-    --rp-neutral-soft: #242d25;
+    --rp-card: #17171b;
+    --rp-soft: #1e1e23;
+    --rp-border: rgba(255, 255, 255, .08);
+    --rp-ink: #e6e6e9;
+    --rp-muted: #a6a6b0;
+    --rp-accent: #86d69b;
+    --rp-accent-2: #7fb2ff;
+    --rp-accent-soft: #232329;
+    --rp-shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 6px 18px rgba(0, 0, 0, .35);
+    --rp-red: #ff8b95;
+    --rp-red-soft: #2a1d20;
+    --rp-red-ink: #ffb3ba;
+    --rp-amber: #ffc266;
+    --rp-amber-soft: #2b261c;
+    --rp-amber-ink: #ffd98a;
+    --rp-neutral-soft: #1e1e23;
+    --rp-offwhite: #1a1a1f;
 }
 
 /* ---------- Header ---------- */
@@ -118,6 +125,7 @@
 
 .rp-date-input:hover { background: var(--rp-card); border-color: var(--rp-border); }
 .rp-date-input:focus { background: var(--rp-card); border-color: var(--rp-accent); box-shadow: 0 0 0 .2rem rgba(45, 69, 47, .12); }
+[data-bs-theme="dark"] .rp-date-input:focus { box-shadow: 0 0 0 .2rem rgba(134, 214, 155, .16); }
 .rp-date-input::-webkit-calendar-picker-indicator { opacity: .55; cursor: pointer; }
 [data-bs-theme="dark"] .rp-date-input { color-scheme: dark; }
 
@@ -270,16 +278,22 @@
 .rp-kpi--penalties { background: var(--rp-neutral-soft); }
 .rp-kpi--declined { background: var(--rp-card); }
 
-[data-bs-theme="dark"] .rp-kpi--pending { background: #3a3122; border-color: rgba(214, 169, 92, .2); }
+[data-bs-theme="dark"] .rp-kpi--books { background: linear-gradient(135deg, #22222a 0%, #2e2e37 100%); border-color: rgba(255, 255, 255, .1); }
+[data-bs-theme="dark"] .rp-kpi--pending { background: var(--rp-amber-soft); border-color: rgba(255, 194, 102, .18); }
 [data-bs-theme="dark"] .rp-kpi--pending .rp-kpi-value,
-[data-bs-theme="dark"] .rp-kpi--pending .rp-kpi-label { color: #f0d9a8; }
-[data-bs-theme="dark"] .rp-kpi--due { background: #3a2427; border-color: rgba(214, 122, 130, .2); }
-[data-bs-theme="dark"] .rp-kpi--due .rp-kpi-value { color: #f0b6bb; }
-[data-bs-theme="dark"] .rp-kpi--secondary .rp-kpi-value { color: #cfe2ce; }
-[data-bs-theme="dark"] .rp-kpi--secondary .rp-kpi-icon { background: rgba(191, 224, 188, .12); color: #9db39c; }
-[data-bs-theme="dark"] .rp-kpi--inventory { background: #253728; }
-[data-bs-theme="dark"] .rp-kpi--active { background: #202b22; }
-[data-bs-theme="dark"] .rp-kpi--declined { background: #1b261d; }
+[data-bs-theme="dark"] .rp-kpi--pending .rp-kpi-label { color: var(--rp-amber-ink); }
+[data-bs-theme="dark"] .rp-kpi--pending .rp-kpi-meta,
+[data-bs-theme="dark"] .rp-kpi--pending .rp-kpi-foot { color: #d8bd8f; }
+[data-bs-theme="dark"] .rp-kpi--due { background: var(--rp-red-soft); border-color: rgba(255, 139, 149, .18); }
+[data-bs-theme="dark"] .rp-kpi--due .rp-kpi-value { color: var(--rp-red); }
+[data-bs-theme="dark"] .rp-kpi--due .rp-kpi-label { color: var(--rp-red-ink); }
+[data-bs-theme="dark"] .rp-kpi--due .rp-kpi-meta,
+[data-bs-theme="dark"] .rp-kpi--due .rp-kpi-foot { color: #d8a9ae; }
+[data-bs-theme="dark"] .rp-kpi--secondary .rp-kpi-value { color: var(--rp-ink); }
+[data-bs-theme="dark"] .rp-kpi--secondary .rp-kpi-icon { background: #26262c; color: var(--rp-accent); }
+[data-bs-theme="dark"] .rp-kpi--inventory { background: var(--rp-card); }
+[data-bs-theme="dark"] .rp-kpi--active { background: var(--rp-offwhite); }
+[data-bs-theme="dark"] .rp-kpi--declined { background: var(--rp-card); }
 
 /* ---------- Analytics cards ---------- */
 .rp-card { border: 1px solid var(--rp-border); border-radius: var(--rp-radius); box-shadow: var(--rp-shadow); }
@@ -292,6 +306,14 @@
 .rp-chart--lg { height: 320px; }
 .rp-chart--md { height: 280px; }
 .rp-chart--sm { height: 250px; }
+/* Doughnuts render best in a square box; keeping the canvas square also
+   guarantees the pie stays circular when the report is scaled for print. */
+.rp-chart--doughnut {
+    height: auto;
+    aspect-ratio: 1 / 1;
+    max-width: 340px;
+    margin-inline: auto;
+}
 .rp-chart canvas { display: block; width: 100% !important; height: 100% !important; }
 
 /* ---------- Tables ---------- */
@@ -360,11 +382,45 @@
     .rp-card .card-body { padding: 1rem; }
     .rp-chart--lg { height: 240px; }
     .rp-chart--md, .rp-chart--sm { height: 230px; }
+    /* Keep doughnuts square on phones too. */
+    .rp-chart--doughnut { height: auto; }
 }
 
 @media print {
     .rp-header, .rp-filter, .rp-period { display: none !important; }
     .rp-card, .rp-kpi { box-shadow: none !important; }
+
+    /* Let every chart keep the aspect ratio it was drawn at. The old fixed
+       print height squashed the canvas and turned the doughnuts into ellipses. */
+    .report-chart-wrap {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    .rp-chart,
+    .rp-chart--lg,
+    .rp-chart--md,
+    .rp-chart--sm {
+        height: auto !important;
+    }
+
+    .rp-chart canvas {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100% !important;
+    }
+
+    .rp-chart--doughnut {
+        width: 100% !important;
+        max-width: 320px !important;
+        margin: 0 auto !important;
+        aspect-ratio: 1 / 1 !important;
+    }
+
+    .rp-chart--doughnut canvas {
+        height: 100% !important;
+    }
 
     /* Keep the 3 + 4 KPI grid intact in the printed report. */
     .report-print-page .row.rp-kpis--primary { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 10px !important; }

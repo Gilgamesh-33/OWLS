@@ -6,7 +6,8 @@ ASP.NET Core MVC (.NET 8) + EF Core + SQL Server LocalDB (Server Object Explorer
 2. Press F5. The database OWLS_DB is created automatically on first run
    (view it in View > SQL Server Object Explorer > (localdb)\MSSQLLocalDB > Databases).
 3. Login as admin: admin@dihs.edu.ph / Admin@123
-   Register a borrower account from the Register page.
+   Register a borrower account from the Register page, or use one of the seeded borrowers
+   (e.g. maria.santos@dihs.edu.ph / Borrower@123). All 10 seeded borrower accounts share that password.
 
 ## Using Migrations instead of EnsureCreated (optional)
 Remove `db.Database.EnsureCreated();` in Data/DbSeeder.cs and use `db.Database.Migrate();`, then in

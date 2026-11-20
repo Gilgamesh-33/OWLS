@@ -37,23 +37,11 @@ namespace OWLS.Controllers
             return View(await q.OrderByDescending(t => t.RequestStatus == "Pending").ThenByDescending(t => t.Id).ToListAsync());
         }
 
-        // BORROWER: dedicated borrow page + status/history
-        public async Task<IActionResult> Borrow(string search, string category, string sort, bool availableOnly = false)
+        // BORROWER: dedicated library page with request status + history
+        public async Task<IActionResult> Borrow()
         {
             if (User.IsInRole("Admin")) return RedirectToAction(nameof(Index));
             var uid = _users.GetUserId(User);
-            var q = _db.Books.Where(b => !b.IsArchived).AsQueryable();
-            if (!string.IsNullOrWhiteSpace(search))
-                q = q.Where(b => b.Title.Contains(search) || b.Author.Contains(search) || b.ISBN.Contains(search) || b.Category.Contains(search));
-            if (!string.IsNullOrWhiteSpace(category)) q = q.Where(b => b.Category == category);
-            if (availableOnly) q = q.Where(b => b.AvailableCopies > 0);
-            q = sort switch
-            {
-                "title_desc" => q.OrderByDescending(b => b.Title),
-                "author" => q.OrderBy(b => b.Author),
-                "year" => q.OrderByDescending(b => b.YearPublished),
-                _ => q.OrderBy(b => b.Title)
-            };
 
             var myTx = await _db.Transactions.Include(t => t.Book)
                 .Where(t => t.UserId == uid)
@@ -61,14 +49,6 @@ namespace OWLS.Controllers
 
             var vm = new BorrowPageViewModel
             {
-                Books = await q.ToListAsync(),
-                Categories = await _db.Books.Where(b => !b.IsArchived).Select(b => b.Category).Distinct().OrderBy(c => c).ToListAsync(),
-                Search = search,
-                Category = category,
-                Sort = sort,
-                AvailableOnly = availableOnly,
-                MyPendingBookIds = myTx.Where(t => t.RequestStatus == "Pending").Select(t => t.BookId).Distinct().ToList(),
-                MyBorrowedBookIds = myTx.Where(t => t.RequestStatus == "Approved" && t.ReturnDate == null).Select(t => t.BookId).Distinct().ToList(),
                 PendingRequests = myTx.Where(t => t.RequestStatus == "Pending").ToList(),
                 ActiveLoans = myTx.Where(t => t.RequestStatus == "Approved" && t.ReturnDate == null && t.Status == "Borrowed").ToList(),
                 OverdueLoans = myTx.Where(t => t.Status == "Overdue").ToList(),

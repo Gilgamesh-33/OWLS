@@ -46,7 +46,7 @@
     </script>
 </head>
 <body class="d-flex flex-column min-vh-100">
-    <a href="#main-content" class="visually-hidden-focusable position-absolute top-0 start-0 m-2 px-3 py-2 bg-white border rounded shadow-sm" style="z-index:2000;color:var(--lb-dark);">Skip to main content</a>
+    <a href="#main-content" class="visually-hidden-focusable position-absolute top-0 start-0 m-2 px-3 py-2 border rounded shadow-sm" style="z-index:2000;background:var(--lb-nav);color:var(--lb-dark);">Skip to main content</a>
 
     <header class="lb-nav no-print">
         <div class="container-fluid lb-nav-inner">
@@ -62,19 +62,15 @@
             <div class="collapse d-md-flex lb-nav-collapse" id="navMain">
                 <nav class="lb-nav-primary" aria-label="Primary">
                     <ul class="lb-links">
-                        @if (!User.Identity.IsAuthenticated || User.IsInRole("Borrower"))
+                        @if (!User.Identity.IsAuthenticated)
                         {
                             <li><a asp-controller="Home" asp-action="Index" class="@Active("Home")">Home</a></li>
                             <li><a asp-controller="Books" asp-action="Index" class="@Active("Books")">Catalog</a></li>
-                            @if (User.IsInRole("Borrower"))
-                            {
-                                <li><a asp-controller="Transactions" asp-action="Borrow" class="@Active("Transactions")">Your Library</a></li>
-                            }
-                            @if (!User.Identity.IsAuthenticated)
-                            {
-                                <li><a asp-controller="Home" asp-action="Membership">Membership</a></li>
-                                <li><a asp-controller="Home" asp-action="OurStory">Our Story</a></li>
-                            }
+                        }
+                        else if (User.IsInRole("Borrower"))
+                        {
+                            <li><a asp-controller="Books" asp-action="Index" class="@Active("Books")">Catalog</a></li>
+                            <li><a asp-controller="Transactions" asp-action="Borrow" class="@Active("Transactions")">Your Library</a></li>
                         }
                         @if (User.IsInRole("Admin"))
                         {

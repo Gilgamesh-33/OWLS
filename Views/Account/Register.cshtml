@@ -1,9 +1,10 @@
 @model RegisterViewModel
 @{
     ViewData["Title"] = "Create account";
+    ViewData["FullWidth"] = true;
 }
-<div class="auth-page">
-    <div class="auth-shell">
+<div class="auth-page auth-page--compact">
+    <div class="auth-shell auth-shell--register">
         <div class="auth-header text-center">
             <a asp-controller="Home" asp-action="Index" class="auth-brand text-decoration-none">
                 <span class="auth-brand-icon"><i class="bi bi-book-half"></i></span>
@@ -12,16 +13,14 @@
         </div>
 
         <div class="card auth-card-pro border-0">
-            <div class="card-body auth-card-body">
-                <div class="mb-4">
-                    <h1 class="auth-title mb-0">Create borrower account</h1>
-                </div>
+            <div class="card-body auth-card-body auth-card-body--compact">
+                <h1 class="auth-title auth-title--compact mb-3">Create borrower account</h1>
 
-                <form asp-action="Register" method="post" novalidate class="auth-form">
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3" role="alert"></div>
+                <form asp-action="Register" method="post" novalidate class="auth-form auth-form--compact">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-2" role="alert"></div>
 
-                    <div class="row g-3">
-                        <div class="col-12">
+                    <div class="row g-2">
+                        <div class="col-12 col-sm-6">
                             <label asp-for="FullName" class="form-label">Full name</label>
                             <div class="input-group auth-input-group">
                                 <span class="input-group-text"><i class="bi bi-person"></i></span>
@@ -29,7 +28,7 @@
                             </div>
                             <span asp-validation-for="FullName" class="text-danger small"></span>
                         </div>
-                        <div class="col-12">
+                        <div class="col-12 col-sm-6">
                             <label asp-for="IdNumber" class="form-label">School ID</label>
                             <div class="input-group auth-input-group">
                                 <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
@@ -91,13 +90,13 @@
                         </div>
                     </div>
 
-                    <button class="btn btn-primary w-100 auth-submit mt-4" type="submit">
+                    <button class="btn btn-primary w-100 auth-submit mt-3" type="submit">
                         <i class="bi bi-person-plus me-1"></i> Create account
                     </button>
                 </form>
 
-                <div class="auth-divider my-4"><span>Already registered?</span></div>
-                <a asp-action="Login" class="btn btn-outline-primary w-100">Log in to your account</a>
+                <div class="auth-divider auth-divider--compact my-2"><span>Already registered?</span></div>
+                <a asp-action="Login" class="btn btn-outline-primary w-100 auth-secondary-btn">Log in to your account</a>
             </div>
         </div>
     </div>

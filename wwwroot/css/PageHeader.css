@@ -24,7 +24,7 @@
     color: var(--lb-dark);
 }
 
-[data-bs-theme="dark"] .pg-title { color: #e8f2e7; }
+[data-bs-theme="dark"] .pg-title { color: #ececf0; }
 
 .pg-subtitle {
     margin: .25rem 0 0;
@@ -33,7 +33,7 @@
     color: #6c7a6c;
 }
 
-[data-bs-theme="dark"] .pg-subtitle { color: #9db39c; }
+[data-bs-theme="dark"] .pg-subtitle { color: #a6a6b0; }
 
 .pg-actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
 

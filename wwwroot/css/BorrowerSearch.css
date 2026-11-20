@@ -53,10 +53,11 @@
 .borrower-error { margin-top: .35rem; font-size: .82rem; color: #b23b48; }
 .borrower-error[hidden] { display: none !important; }
 
-[data-bs-theme="dark"] .borrower-suggestions { background: #1b261d; border-color: rgba(191, 224, 188, .16); }
-[data-bs-theme="dark"] .borrower-option { color: #e8f2e7; }
+[data-bs-theme="dark"] .borrower-suggestions { background: #17171b; border-color: rgba(255, 255, 255, .1); box-shadow: 0 12px 28px rgba(0, 0, 0, .55); }
+[data-bs-theme="dark"] .borrower-option { color: #e6e6e9; }
 [data-bs-theme="dark"] .borrower-option:hover,
-[data-bs-theme="dark"] .borrower-option.is-active { background: #253728; }
+[data-bs-theme="dark"] .borrower-option.is-active { background: #26262c; }
 [data-bs-theme="dark"] .borrower-option-meta,
-[data-bs-theme="dark"] .borrower-empty { color: #9db39c; }
-[data-bs-theme="dark"] .borrower-option-check { color: #cfe2ce; }
+[data-bs-theme="dark"] .borrower-empty { color: #a6a6b0; }
+[data-bs-theme="dark"] .borrower-option-check { color: #86d69b; }
+[data-bs-theme="dark"] .borrower-option:focus-visible { outline-color: #86d69b; }
