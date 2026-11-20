@@ -91,17 +91,9 @@ namespace OWLS.Models
 
     public class BorrowPageViewModel
     {
-        public List<Book> Books { get; set; } = new();
-        public List<string> Categories { get; set; } = new();
-        public List<int> MyPendingBookIds { get; set; } = new();
-        public List<int> MyBorrowedBookIds { get; set; } = new();
         public List<BorrowTransaction> PendingRequests { get; set; } = new();
         public List<BorrowTransaction> ActiveLoans { get; set; } = new();
         public List<BorrowTransaction> OverdueLoans { get; set; } = new();
         public List<BorrowTransaction> History { get; set; } = new();
-        public string Search { get; set; }
-        public string Category { get; set; }
-        public string Sort { get; set; }
-        public bool AvailableOnly { get; set; }
     }
 }

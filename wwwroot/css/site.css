@@ -1513,3 +1513,89 @@ body {
 .lb-logout-btn i { line-height: 1; }
 .filter-check { align-items: center; }
 .filter-check .form-check-input { margin-top: 0; }
+
+/* ===================== COMPACT REGISTER (one screen, no scroll) ===================== */
+.auth-page--compact {
+    min-height: calc(100vh - 130px); /* viewport minus navbar + footer */
+    padding: .5rem 1rem;
+}
+
+.auth-shell--register { max-width: 560px; }
+
+.auth-page--compact .auth-header { margin-bottom: .5rem; }
+
+.auth-page--compact .auth-brand {
+    font-size: 1.15rem;
+    gap: .45rem;
+}
+
+.auth-page--compact .auth-brand-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    font-size: .9rem;
+}
+
+.auth-card-body--compact { padding: .95rem 1.1rem 1.05rem; }
+@media (min-width: 768px) { .auth-card-body--compact { padding: 1.1rem 1.5rem 1.15rem; } }
+
+.auth-title--compact { font-size: 1.3rem; }
+
+.auth-form--compact .row { --bs-gutter-y: .5rem; }
+.auth-form--compact .form-label {
+    font-size: .8rem;
+    margin-bottom: .2rem;
+}
+
+.auth-form--compact .auth-input-group .input-group-text,
+.auth-form--compact .auth-input-group .toggle-password,
+.auth-form--compact .auth-input-group .form-control {
+    min-height: 40px;
+}
+
+.auth-form--compact .auth-input-group .form-control {
+    padding-top: .4rem;
+    padding-bottom: .4rem;
+}
+
+.auth-form--compact .auth-input-group .input-group-text { min-width: 40px; }
+
+.auth-form--compact .auth-submit {
+    padding: .55rem 1rem;
+    font-size: .9rem;
+}
+
+.auth-form--compact .pw-strength { margin-top: 0; }
+.auth-form--compact .pw-strength-head { margin-bottom: .2rem; }
+.auth-form--compact .pw-strength-track { height: 6px; }
+.auth-form--compact .pw-rules { margin-top: .35rem; gap: .05rem .6rem; }
+.auth-form--compact .pw-rules li { font-size: .72rem; }
+
+.auth-form--compact .field-validation-error,
+.auth-form--compact .auth-form span.text-danger.small {
+    margin-top: .2rem;
+    font-size: .75rem;
+}
+
+/* Empty validation containers should not take up space on the one-screen form. */
+.auth-form .validation-summary-valid,
+.auth-form .field-validation-valid { display: none; }
+
+.auth-divider--compact { font-size: .78rem; }
+.auth-divider--compact::before,
+.auth-divider--compact::after { border-bottom-color: #e7ebe6; }
+.auth-secondary-btn { padding: .45rem 1rem; font-size: .85rem; }
+
+/* Very short screens: drop the brand header so the form still fits. */
+@media (max-height: 780px) {
+    .auth-page--compact { padding: 0 .5rem; }
+    .auth-page--compact .auth-header { display: none; }
+}
+
+@media (max-height: 660px) {
+    .auth-form--compact .pw-rules { display: none; }
+}
+
+@media (max-width: 575.98px) {
+    .auth-form--compact .pw-rules { display: none; }
+}
