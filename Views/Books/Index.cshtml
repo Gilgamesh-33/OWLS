@@ -31,7 +31,8 @@
         catalogActions = @<a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1"></i> Add Book</a>;
     }
 }
-@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel {
+@await Html.PartialAsync("_PageHeader", new PageHeaderViewModel
+{
     Title = archivedView ? "Archived Books" : admin ? "Book Catalog" : "Browse Catalog",
     Subtitle = archivedView ? "Titles kept for their history. Restore one to return it to the catalog."
              : admin ? "Manage your collection, check books out and keep stock up to date."
@@ -64,8 +65,6 @@
 <!-- ============ TOOLBAR ============ -->
 <section class="cat-toolbar no-print">
     <form method="get" asp-action="Index" id="catForm" class="cat-toolbar-row">
-        <input type="hidden" name="category" value="@cat" />
-
         <div class="cat-search">
             <i class="bi bi-search"></i>
             <input type="search" name="search" value="@search" placeholder="Search title, author, ISBN or category…" aria-label="Search books" autocomplete="off" data-live-search />
@@ -86,6 +85,18 @@
             </select>
         </div>
 
+        <div class="cat-control">
+            <label for="catCategory" class="visually-hidden">Category</label>
+            <i class="bi bi-tags"></i>
+            <select id="catCategory" name="category" class="cat-select" data-autosubmit>
+                <option value="" selected="@(string.IsNullOrWhiteSpace(cat))">All categories</option>
+                @foreach (var c in categories)
+                {
+                    <option value="@c" selected="@(c == cat)">@(c == "Archived" && archivedCount > 0 ? "Archived (" + archivedCount + ")" : c)</option>
+                }
+            </select>
+        </div>
+
         <label class="cat-switch" for="av">
             <input type="checkbox" id="av" name="availableOnly" value="true" checked="@avail" data-autosubmit />
             <span class="cat-switch-track"><span class="cat-switch-thumb"></span></span>
@@ -99,22 +110,6 @@
 
         <button type="submit" class="visually-hidden">Search</button>
     </form>
-
-    <!-- Category chips -->
-    <nav class="cat-chips" aria-label="Categories">
-        <a class="cat-chip @(string.IsNullOrWhiteSpace(cat) ? "active" : "")" asp-action="Index" asp-route-search="@search" asp-route-sort="@sort" asp-route-availableOnly="@(avail ? "true" : null)">All</a>
-        @foreach (var c in categories)
-        {
-            bool isArchiveChip = c == "Archived";
-            <a class="cat-chip @(c == cat ? "active" : "") @(isArchiveChip ? "archived-chip" : "")" asp-action="Index" asp-route-category="@c" asp-route-search="@search" asp-route-sort="@sort" asp-route-availableOnly="@(avail ? "true" : null)">
-                @if (isArchiveChip)
-                {
-                    <i class="bi bi-archive me-1"></i>
-                }
-                @c@(isArchiveChip && archivedCount > 0 ? " (" + archivedCount + ")" : "")
-            </a>
-        }
-    </nav>
 
     <!-- Active filters only (the book-count text was intentionally removed) -->
     @if (hasFilters)
@@ -159,7 +154,7 @@
                     }
                     else
                     {
-                        <div class="book-cover book-cover-empty"><i class="bi bi-book"></i></div>
+                        @await Html.PartialAsync("_BookCover", b)
                     }
 
                     @if (b.IsArchived)

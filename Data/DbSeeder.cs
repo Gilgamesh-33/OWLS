@@ -30,6 +30,27 @@ namespace OWLS.Data
             new Book { ISBN = "9780132350884", Title = "Clean Code", Author = "Robert C. Martin", Category = "Technology", YearPublished = 2008, TotalCopies = 20, AvailableCopies = 20, CoverImagePath = "/uploads/CleanCode.jpg" },
             new Book { ISBN = "9780061120084", Title = "To Kill a Mockingbird", Author = "Harper Lee", Category = "Fiction", YearPublished = 1960, TotalCopies = 20, AvailableCopies = 20, CoverImagePath = "/uploads/book-cover-To-Kill-a-Mockingbird-many-1961.webp" },
             new Book { ISBN = "9780553380163", Title = "A Brief History of Time", Author = "Stephen Hawking", Category = "Science", YearPublished = 1988, TotalCopies = 20, AvailableCopies = 20, CoverImagePath = "/uploads/A_brief_history_of_time.jpg" },
+            // ---- 20 additional titles across 14 new genres (no cover file needed: the catalog draws one) ----
+            new Book { ISBN = "9780547928227", Title = "The Hobbit", Author = "J.R.R. Tolkien", Category = "Fantasy", YearPublished = 1937, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780590353427", Title = "Harry Potter and the Sorcerer's Stone", Author = "J.K. Rowling", Category = "Fantasy", YearPublished = 1997, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780441013593", Title = "Dune", Author = "Frank Herbert", Category = "Science Fiction", YearPublished = 1965, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780812550702", Title = "Ender's Game", Author = "Orson Scott Card", Category = "Science Fiction", YearPublished = 1985, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780451524935", Title = "1984", Author = "George Orwell", Category = "Science Fiction", YearPublished = 1949, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780062073488", Title = "And Then There Were None", Author = "Agatha Christie", Category = "Mystery", YearPublished = 1939, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780062693662", Title = "Murder on the Orient Express", Author = "Agatha Christie", Category = "Mystery", YearPublished = 1934, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780486282114", Title = "Frankenstein", Author = "Mary Shelley", Category = "Horror", YearPublished = 1818, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780141439518", Title = "Pride and Prejudice", Author = "Jane Austen", Category = "Romance", YearPublished = 1813, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780375842207", Title = "The Book Thief", Author = "Markus Zusak", Category = "Historical Fiction", YearPublished = 2005, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780553296983", Title = "The Diary of a Young Girl", Author = "Anne Frank", Category = "Biography", YearPublished = 1947, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780316322409", Title = "I Am Malala", Author = "Malala Yousafzai", Category = "Biography", YearPublished = 2013, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780735211292", Title = "Atomic Habits", Author = "James Clear", Category = "Self-Help", YearPublished = 2018, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780857197689", Title = "The Psychology of Money", Author = "Morgan Housel", Category = "Business", YearPublished = 2020, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780807014295", Title = "Man's Search for Meaning", Author = "Viktor E. Frankl", Category = "Philosophy", YearPublished = 1946, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780394404288", Title = "The Prophet", Author = "Kahlil Gibran", Category = "Poetry", YearPublished = 1923, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780439023528", Title = "The Hunger Games", Author = "Suzanne Collins", Category = "Young Adult", YearPublished = 2008, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780544336261", Title = "The Giver", Author = "Lois Lowry", Category = "Young Adult", YearPublished = 1993, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780062316097", Title = "Sapiens", Author = "Yuval Noah Harari", Category = "History", YearPublished = 2011, TotalCopies = 20, AvailableCopies = 20 },
+            new Book { ISBN = "9780143127536", Title = "How Not to Be Wrong", Author = "Jordan Ellenberg", Category = "Mathematics", YearPublished = 2014, TotalCopies = 20, AvailableCopies = 20 },
         };
 
         // Borrower accounts created on first run so the demo library has a populated user list.
@@ -73,7 +94,7 @@ namespace OWLS.Data
                 await users.AddToRoleAsync(admin, AdminRole);
             }
 
-            await SyncSharedBooksAsync(db);
+            await SyncSharedBooksAsync(db, sp.GetRequiredService<IWebHostEnvironment>());
             await SeedBorrowersAsync(users);
         }
 
@@ -99,7 +120,7 @@ namespace OWLS.Data
 
         // Adds missing shared books, fills in missing covers, and tops up the copy count
         // for older installs. Never overwrites a set cover and never touches transactions.
-        private static async Task SyncSharedBooksAsync(ApplicationDbContext db)
+        private static async Task SyncSharedBooksAsync(ApplicationDbContext db, IWebHostEnvironment env)
         {
             var existing = await db.Books.ToListAsync();
             var changed = false;
@@ -126,6 +147,15 @@ namespace OWLS.Data
                 {
                     book.CoverImagePath = shared.CoverImagePath;
                     changed = true;
+                }
+
+                // The shared list has no cover for this book, but an older run saved a path to an image file that
+                // is not on this machine. Clear it so the catalog shows the generated cover instead of a missing picture.
+                if (book != null && string.IsNullOrWhiteSpace(shared.CoverImagePath)
+                    && book.CoverImagePath == "/uploads/covers/" + book.ISBN + ".jpg")
+                {
+                    var file = Path.Combine(env.WebRootPath, "uploads", "covers", book.ISBN + ".jpg");
+                    if (!System.IO.File.Exists(file)) { book.CoverImagePath = null; changed = true; }
                 }
 
                 // Bring older installs up to the shared copy count without touching books

@@ -1599,3 +1599,52 @@ body {
 @media (max-width: 575.98px) {
     .auth-form--compact .pw-rules { display: none; }
 }
+
+/* ---- Generated book cover (used when a book has no cover image) ---- */
+.book-cover-gen {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.bcg {
+    box-sizing: border-box;
+    width: 200px;
+    height: 300px;
+    padding: 24px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    color: #fff;
+    overflow: hidden;
+    font-family: Georgia, "Times New Roman", serif;
+    background: linear-gradient(160deg, hsl(var(--h), 42%, 28%), hsl(var(--h), 48%, 12%));
+    border: 6px double hsla(var(--h), 65%, 72%, .55);
+}
+
+.bcg-genre {
+    display: block;
+    font: 700 9px/1.2 Arial, Helvetica, sans-serif;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: hsl(var(--h), 70%, 78%);
+}
+
+.bcg-title {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    line-height: 1.15;
+    word-break: break-word;
+    padding: 0 4px;
+}
+
+.bcg-author {
+    display: block;
+    font: 400 12px/1.2 Arial, Helvetica, sans-serif;
+    opacity: .9;
+}

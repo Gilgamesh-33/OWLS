@@ -1,0 +1,18 @@
+﻿@model Book
+@{
+    // Same genre always gets the same colour.
+    var genre = Model.Category ?? "";
+    int hue = 0;
+    foreach (var ch in genre) { hue = (hue * 31 + ch) % 360; }
+    int len = (Model.Title ?? "").Length;
+    int titleSize = len <= 10 ? 26 : len <= 22 ? 21 : len <= 34 ? 17 : 14;
+}
+<svg class="book-cover book-cover-gen" viewBox="0 0 200 300" role="img" aria-label="Cover of @Model.Title">
+    <foreignObject x="0" y="0" width="200" height="300">
+        <div class="bcg" style="--h:@(hue)">
+            <span class="bcg-genre">@genre</span>
+            <span class="bcg-title" style="font-size:@(titleSize)px">@Model.Title</span>
+            <span class="bcg-author">@Model.Author</span>
+        </div>
+    </foreignObject>
+</svg>
